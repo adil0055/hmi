@@ -1,0 +1,21 @@
+module Hmi
+
+singleton Theme 1.0 Theme.qml
+singleton Fmt 1.0 Fmt.qml
+
+Arc 1.0 Arc.qml
+Bezel 1.0 Bezel.qml
+BottomBar 1.0 BottomBar.qml
+CenterPanel 1.0 CenterPanel.qml
+ClusterScene 1.0 ClusterScene.qml
+ClusterWindow 1.0 ClusterWindow.qml
+ControlWindow 1.0 ControlWindow.qml
+Dial 1.0 Dial.qml
+EcoBar 1.0 EcoBar.qml
+LaneGraphic 1.0 LaneGraphic.qml
+MiniArcGauge 1.0 MiniArcGauge.qml
+Needle 1.0 Needle.qml
+Telltale 1.0 Telltale.qml
+TelltaleBar 1.0 TelltaleBar.qml
+TickRing 1.0 TickRing.qml
+ShootHarness 1.0 ShootHarness.qml
