@@ -21,10 +21,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from PySide6.QtCore import QSize, QTimer, QUrl  # noqa: E402
-from PySide6.QtGui import QFontDatabase, QGuiApplication  # noqa: E402
+from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
 
-from backend import VehicleState  # noqa: E402
+from backend import FontManager, VehicleState  # noqa: E402
 
 
 def coerce(text: str):
@@ -46,16 +46,19 @@ def main() -> int:
                         help="vehicle properties to apply before rendering")
     parser.add_argument("--width", type=int, default=1790)
     parser.add_argument("--delay", type=int, default=700, help="ms to let the scene settle")
+    parser.add_argument("--font", nargs="*", default=None, metavar="FILE",
+                        help="font file(s) or a directory to render with")
     args = parser.parse_args()
 
     app = QGuiApplication(sys.argv[:1])
 
-    family = ""
-    for path in sorted((ROOT / "assets" / "fonts").glob("*.ttf")):
-        ids = QFontDatabase.addApplicationFont(str(path))
-        names = QFontDatabase.applicationFontFamilies(ids) if ids >= 0 else []
-        if names and not family:
-            family = names[0]
+    # persist=False: taking a screenshot must not change the app's saved font.
+    fonts = FontManager(ROOT / "assets" / "fonts", persist=False)
+    if args.font:
+        ok = fonts.loadPath(args.font[0]) if len(args.font) == 1 else fonts.loadFiles(args.font)
+        print(fonts.status)
+        if not ok:
+            return 2
 
     vehicle = VehicleState()
     for pair in args.set:
@@ -73,7 +76,7 @@ def main() -> int:
     view.engine().addImportPath(str(ROOT / "qml"))
     ctx = view.engine().rootContext()
     ctx.setContextProperty("Vehicle", vehicle)
-    ctx.setContextProperty("appFontFamily", family or "DejaVu Sans")
+    ctx.setContextProperty("Fonts", fonts)
     ctx.setContextProperty("appAssetPath", QUrl.fromLocalFile(str(ROOT / "assets")).toString())
 
     view.setSource(QUrl.fromLocalFile(str(ROOT / "qml" / "Hmi" / "ShootHarness.qml")))

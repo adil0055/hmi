@@ -24,8 +24,27 @@ QtObject {
         y: 40
     }
 
+    /*!
+        Push the current typeface into Theme.
+
+        This is a explicit assignment driven by FontManager's signals rather
+        than a Qt.binding: a binding assigned to a singleton's property is
+        evaluated in that singleton's scope, and QML singletons cannot see
+        context properties like `Fonts`, so it would silently resolve to null.
+    */
+    function syncFonts() {
+        Theme.fontFamily = Fonts.family
+        Theme.uiFontFamily = Fonts.uiFamily
+    }
+
+    property Connections fontWatch: Connections {
+        target: Fonts
+        function onFamilyChanged() { app.syncFonts() }
+        function onUiFamilyChanged() { app.syncFonts() }
+    }
+
     Component.onCompleted: {
         Theme.assetPath = appAssetPath
-        Theme.fontFamily = appFontFamily
+        syncFonts()
     }
 }
