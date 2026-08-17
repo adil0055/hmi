@@ -19,6 +19,9 @@ Item {
 
     Component.onCompleted: {
         Theme.assetPath = appAssetPath
-        Theme.fontFamily = appFontFamily
+        // See Main.qml: singletons cannot resolve context properties, so this
+        // has to be an assignment rather than a binding.
+        Theme.fontFamily = Fonts.family
+        Theme.uiFontFamily = Fonts.uiFamily
     }
 }

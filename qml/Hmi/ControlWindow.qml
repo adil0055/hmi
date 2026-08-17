@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Window
 import Hmi
@@ -42,7 +43,7 @@ Window {
             Text {
                 text: section.title.toUpperCase()
                 color: root.accentColor
-                font.family: Theme.fontFamily
+                font.family: Theme.uiFontFamily
                 font.pixelSize: 12
                 font.letterSpacing: 1.6
                 font.weight: Font.DemiBold
@@ -67,7 +68,7 @@ Window {
         Text {
             text: row.label
             color: root.labelColor
-            font.family: Theme.fontFamily
+            font.family: Theme.uiFontFamily
             font.pixelSize: 13
             Layout.preferredWidth: 92
         }
@@ -84,7 +85,7 @@ Window {
         Text {
             text: row.value.toFixed(row.decimals) + row.suffix
             color: root.valueColor
-            font.family: Theme.fontFamily
+            font.family: Theme.uiFontFamily
             font.pixelSize: 13
             horizontalAlignment: Text.AlignRight
             Layout.preferredWidth: 64
@@ -103,7 +104,7 @@ Window {
         implicitHeight: 30
         leftPadding: 10
         rightPadding: 10
-        font.family: Theme.fontFamily
+        font.family: Theme.uiFontFamily
         font.pixelSize: 12
 
         background: Rectangle {
@@ -126,7 +127,7 @@ Window {
     component Action: Button {
         id: act
         implicitHeight: 32
-        font.family: Theme.fontFamily
+        font.family: Theme.uiFontFamily
         font.pixelSize: 12
         background: Rectangle {
             radius: 6
@@ -181,18 +182,140 @@ Window {
                             Text {
                                 text: modelData.k
                                 color: root.labelColor
-                                font.family: Theme.fontFamily
+                                font.family: Theme.uiFontFamily
                                 font.pixelSize: 11
                             }
                             Text {
                                 text: modelData.v
                                 color: root.valueColor
-                                font.family: Theme.fontFamily
+                                font.family: Theme.uiFontFamily
                                 font.pixelSize: 16
                             }
                         }
                     }
                 }
+            }
+
+            // ------------------------------------------------------ typeface
+            SectionBox { title: qsTr("Typeface") }
+
+            FileDialog {
+                id: fontDialog
+                title: qsTr("Choose font files")
+                fileMode: FileDialog.OpenFiles
+                nameFilters: [qsTr("Font files (*.ttf *.otf *.ttc *.otc *.woff *.woff2)"),
+                              qsTr("All files (*)")]
+                onAccepted: Fonts.loadFiles(selectedFiles)
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: fontInfo.implicitHeight + 20
+                radius: 8
+                color: root.panelBg
+                border.width: 1
+                border.color: root.panelLine
+
+                ColumnLayout {
+                    id: fontInfo
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 3
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: Fonts.family
+                        color: root.valueColor
+                        font.family: Theme.uiFontFamily
+                        font.pixelSize: 15
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: Fonts.isCustom ? Fonts.source : qsTr("bundled with the project")
+                        color: root.labelColor
+                        font.family: Theme.uiFontFamily
+                        font.pixelSize: 11
+                        elide: Text.ElideMiddle
+                    }
+                    // Live preview in the font the cluster is actually using.
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        text: "0123456789  km/h  Drive info"
+                        color: root.valueColor
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 20
+                        elide: Text.ElideRight
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Action {
+                    Layout.fillWidth: true
+                    text: qsTr("Load font…")
+                    onClicked: fontDialog.open()
+                }
+                Action {
+                    Layout.fillWidth: true
+                    text: qsTr("Use bundled")
+                    enabled: Fonts.isCustom
+                    opacity: enabled ? 1 : 0.45
+                    onClicked: Fonts.useBundled()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                TextField {
+                    id: fontPath
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("…or type a font file or folder path")
+                    color: root.valueColor
+                    font.family: Theme.uiFontFamily
+                    font.pixelSize: 12
+                    background: Rectangle {
+                        radius: 6
+                        color: "#232B33"
+                        border.width: 1
+                        border.color: fontPath.activeFocus ? root.accentColor : root.panelLine
+                    }
+                    onAccepted: Fonts.loadPath(text)
+                }
+                Action {
+                    text: qsTr("Apply")
+                    Layout.preferredWidth: 70
+                    onClicked: Fonts.loadPath(fontPath.text)
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: Fonts.status !== ""
+                text: Fonts.status
+                color: Fonts.status.indexOf("Could not") === 0
+                       || Fonts.status.indexOf("Not found") === 0
+                       || Fonts.status.indexOf("No font") === 0 ? "#F5A623" : root.labelColor
+                font.family: Theme.uiFontFamily
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("Select a family's regular, italic and bold files together — the "
+                           + "cluster uses italic numerals and a demi-bold range. The choice "
+                           + "is remembered next time. The panel keeps its own font so it "
+                           + "stays readable.")
+                color: root.labelColor
+                font.family: Theme.uiFontFamily
+                font.pixelSize: 10
+                wrapMode: Text.Wrap
+                opacity: 0.75
             }
 
             // ------------------------------------------------------ ignition
@@ -224,7 +347,7 @@ Window {
                 Text {
                     text: qsTr("Input")
                     color: root.labelColor
-                    font.family: Theme.fontFamily
+                    font.family: Theme.uiFontFamily
                     font.pixelSize: 13
                     Layout.preferredWidth: 92
                 }
@@ -246,7 +369,7 @@ Window {
                 Text {
                     text: qsTr("Drive mode")
                     color: root.labelColor
-                    font.family: Theme.fontFamily
+                    font.family: Theme.uiFontFamily
                     font.pixelSize: 13
                     Layout.preferredWidth: 92
                 }
@@ -271,7 +394,7 @@ Window {
                 Text {
                     text: qsTr("Gear")
                     color: root.labelColor
-                    font.family: Theme.fontFamily
+                    font.family: Theme.uiFontFamily
                     font.pixelSize: 13
                     Layout.preferredWidth: 92
                 }
@@ -417,7 +540,7 @@ Window {
                 Text {
                     text: qsTr("Economy")
                     color: root.labelColor
-                    font.family: Theme.fontFamily
+                    font.family: Theme.uiFontFamily
                     font.pixelSize: 13
                     Layout.preferredWidth: 92
                 }
@@ -596,7 +719,7 @@ Window {
                 Text {
                     text: qsTr("Lane drift")
                     color: root.labelColor
-                    font.family: Theme.fontFamily
+                    font.family: Theme.uiFontFamily
                     font.pixelSize: 13
                     Layout.preferredWidth: 92
                 }

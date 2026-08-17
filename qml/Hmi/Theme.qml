@@ -16,8 +16,11 @@ QtObject {
     readonly property int designW: 1790
     readonly property int designH: 870
 
-    // Set from Main.qml once the bundled fonts have been registered.
+    // Bound to the FontManager by Main.qml, so loading a typeface at runtime
+    // reflows the whole cluster. `uiFontFamily` stays on the bundled face: the
+    // control panel has to remain readable even if a symbol font is loaded.
     property string fontFamily: "Titillium Web"
+    property string uiFontFamily: "Titillium Web"
     property url assetPath: "../../assets"
 
     function icon(name) { return assetPath + "/icons/" + name + ".svg" }

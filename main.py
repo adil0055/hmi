@@ -20,34 +20,15 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QTimer, QUrl
-from PySide6.QtGui import QFontDatabase, QGuiApplication
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow
 
-from backend import Simulator, VehicleState
+from backend import FontManager, Simulator, VehicleState
 
 ROOT = Path(__file__).resolve().parent
 QML_DIR = ROOT / "qml"
 FONT_DIR = ROOT / "assets" / "fonts"
-
-
-def load_fonts() -> str:
-    """Register the bundled fonts; return the family to use for the cluster."""
-    family = ""
-    for path in sorted(FONT_DIR.glob("*.ttf")):
-        font_id = QFontDatabase.addApplicationFont(str(path))
-        if font_id < 0:
-            continue
-        families = QFontDatabase.applicationFontFamilies(font_id)
-        if families and not family:
-            family = families[0]
-    if not family:
-        # Bundled fonts missing: fall back to whatever the system offers.
-        for candidate in ("Titillium Web", "Roboto", "Open Sans", "DejaVu Sans"):
-            if candidate in QFontDatabase.families():
-                return candidate
-        return "sans-serif"
-    return family
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -57,6 +38,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--scale", type=float, default=0.0, help="force render scale")
     parser.add_argument("--screenshot", default="", help="render one frame to a PNG and exit")
     parser.add_argument("--shot-delay", type=int, default=900, help="ms before --screenshot")
+    parser.add_argument("--font", nargs="*", default=None, metavar="FILE",
+                        help="font file(s) or a directory to use instead of the bundled one")
     return parser.parse_args(argv)
 
 
@@ -67,7 +50,14 @@ def main(argv: list[str] | None = None) -> int:
     app.setApplicationName("Car HMI Cluster")
     app.setOrganizationName("hmi")
 
-    font_family = load_fonts()
+    fonts = FontManager(FONT_DIR)
+    if args.font:
+        if len(args.font) == 1:
+            fonts.loadPath(args.font[0])
+        else:
+            fonts.loadFiles(args.font)
+        if fonts.status:
+            print(fonts.status)
 
     vehicle = VehicleState()
     simulator = Simulator(vehicle)
@@ -77,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ctx = engine.rootContext()
     ctx.setContextProperty("Vehicle", vehicle)
-    ctx.setContextProperty("appFontFamily", font_family)
+    ctx.setContextProperty("Fonts", fonts)
     ctx.setContextProperty("appAssetPath", QUrl.fromLocalFile(str(ROOT / "assets")).toString())
     ctx.setContextProperty("appShowPanel", not args.no_panel)
     ctx.setContextProperty("appFullscreen", args.fullscreen)
@@ -93,7 +83,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.screenshot:
         _schedule_screenshot(app, engine, args.screenshot, args.shot_delay)
 
-    return app.exec()
+    status = app.exec()
+    # Tear the QML down first: its bindings reference the model objects, and
+    # evaluating them after those are gone logs spurious errors on exit.
+    del engine
+    return status
 
 
 def _schedule_screenshot(app, engine, target: str, delay_ms: int) -> None:

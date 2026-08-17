@@ -51,6 +51,7 @@ On Fedora: `sudo dnf install mesa-libEGL mesa-libGL libxkbcommon-x11 fontconfig`
 | `--fullscreen` | open the cluster full screen |
 | `--scale N` | force the render scale instead of fitting the window |
 | `--screenshot FILE` | render one frame to a PNG and exit (works headless) |
+| `--font FILE...` | start with your own typeface (files, or a folder of them) |
 
 Keys in the cluster window: **F11** full screen, **Esc** leave full screen,
 **B** show/hide the bezel.
@@ -101,6 +102,41 @@ colour; Eco and Sport also change the shift points and fuel burn.
 
 ---
 
+## Using your own typeface
+
+The **Typeface** section at the top of the test panel loads any font you point
+it at, and the whole cluster restyles immediately — numerals, gauge labels,
+drive info, odometer, everything.
+
+- **Load font…** opens a file picker. Select a family's several styles at once
+  (regular, italic, bold) — the cluster asks for italic numerals and a
+  demi-bold range, so Qt otherwise has to synthesise them from the regular.
+- Or type a path into the field and press **Apply**. A folder works too: every
+  font file in it is loaded.
+- **Use bundled** goes back to Titillium Web.
+
+`.ttf`, `.otf`, `.ttc`, `.woff` and `.woff2` all work. The panel shows the
+family name it resolved, a live preview in that font, and an explanatory
+message if a file could not be read.
+
+Your choice is remembered, so the cluster comes back up in your font next
+time. If that file later moves or is deleted, the cluster falls back to the
+bundled typeface and says so rather than failing to start.
+
+You can also set it from the command line, which is handy for screenshots:
+
+```bash
+python3 main.py --font ~/fonts/Inter-Regular.ttf ~/fonts/Inter-Italic.ttf
+python3 main.py --font ~/fonts/my-brand-family/
+python3 tools/shoot.py shot.png --font ~/fonts/my-brand-family/
+```
+
+The control panel deliberately keeps the bundled font for its own labels. If
+a loaded font turned out to be a symbol or display face, a panel rendered in
+it would leave you no way to read the button that undoes the change.
+
+---
+
 ## Layout
 
 ```
@@ -108,6 +144,7 @@ main.py                 entry point: registers fonts, model and QML
 backend/
   vehicle.py            VehicleState — every cluster signal as a Qt property
   simulator.py          engine, gearbox, road load, fuel, trip computer
+  fonts.py              FontManager — bundled and user-supplied typefaces
 qml/
   Main.qml              the two windows
   Hmi/
@@ -121,9 +158,9 @@ qml/
     LaneGraphic.qml     perspective lane markings
     BottomBar.qml       outside temperature and odometer
     TelltaleBar.qml     the warning lamp strip
-    ControlWindow.qml   the test panel
+    ControlWindow.qml   the test panel, including the typeface loader
 assets/
-  fonts/                Titillium Web (SIL Open Font License)
+  fonts/                Titillium Web (SIL Open Font License), the default
   icons/                generated telltale symbols
 tools/
   make_icons.py         regenerates assets/icons
