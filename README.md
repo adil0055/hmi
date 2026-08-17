@@ -137,6 +137,46 @@ it would leave you no way to read the button that undoes the change.
 
 ---
 
+### Checking that it really is your typeface
+
+Loading a font is one thing; proving the shipped build is drawing it is
+another. Qt does not fail when a family is missing — it silently substitutes
+another one — so a cluster can come up looking approximately right and be
+branded wrong.
+
+`tools/text_dump.py` renders a frame and writes down everything it drew: every
+string, where it landed in image coordinates, and which typeface Qt *actually*
+resolved each one to.
+
+```bash
+python3 tools/text_dump.py frame.png --json frame.json \
+    --set speed=118 rpm=3450 gearMode=D --font ~/fonts/Inter-Regular.ttf
+```
+
+A frame whose `requestedFamily` and `resolvedFamily` disagree is the cluster
+lying about its own branding, and this is where that shows up.
+
+`tools/font_corpus.py` runs that across a matrix of typefaces and vehicle
+states, producing a labelled corpus — one PNG per combination, each paired
+with the truth behind it:
+
+```bash
+python3 tools/font_corpus.py --out corpus          # everything installed
+python3 tools/font_corpus.py --list                # what is available here
+```
+
+The default candidate set is awkward on purpose. It holds three near-clones in
+each of three categories — Liberation Sans, FreeSans and DejaVu Sans are all
+Helvetica-Arial grotesques; Liberation Serif and FreeSerif are both Times
+clones — because a checker that can only tell a serif from a sans-serif has
+not been tested at all.
+
+That corpus is what the companion `telltales` project scores its camera-side
+text and typeface checks against, since every answer there has a known-correct
+one to be marked against.
+
+---
+
 ## Layout
 
 ```
@@ -165,6 +205,8 @@ assets/
 tools/
   make_icons.py         regenerates assets/icons
   shoot.py              headless screenshot of any cluster state
+  text_dump.py          a frame plus every string and typeface it drew
+  font_corpus.py        that, across a matrix of fonts and vehicle states
   smoke_test.py         drives the simulator and checks it behaves
 ```
 
