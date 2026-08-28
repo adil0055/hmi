@@ -146,7 +146,7 @@ Item {
     ClusterText {
         visible: root.duration > 0
         text: "- " + root._clock(root.duration - root.elapsed)
-        designSize: 18
+        designSize: BmwTheme.trackRemainingSize
         color: BmwTheme.textDim
         x: rail.x + rail.width - width
         y: rail.y + 12
@@ -155,7 +155,7 @@ Item {
     ClusterText {
         visible: !root.playing
         text: qsTr("PAUSED")
-        designSize: 16
+        designSize: BmwTheme.trackPausedSize
         color: BmwTheme.textDim
         font.letterSpacing: 1.4
         x: rail.x

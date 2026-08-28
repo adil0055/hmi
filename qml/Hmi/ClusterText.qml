@@ -7,7 +7,10 @@ import Hmi
 
     Set \l designSize rather than \c font.pixelSize: it is a size quoted
     against the reference face, which Theme converts for whatever face is
-    loaded.  Where the artwork centres text on a coordinate, add
+    loaded.  Give it a size from \l Theme or \l BmwTheme rather than a
+    literal — those come from \l TextSizes, which is what lets the size panel
+    find this run of text and adjust it.  Where the artwork centres text on a
+    coordinate, add
     \c Theme.capDy(designSize) to the \c y as well; where one run has to sit on
     another's baseline, anchor to it (\c anchors.baseline) instead of guessing
     an offset, so Qt does the arithmetic from the real metrics.

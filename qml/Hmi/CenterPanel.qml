@@ -40,7 +40,7 @@ Item {
             visible: root.showGearNumber && root.gearNumber > 0
             text: root.gearNumber
             color: root.accent
-            designSize: Math.round(Theme.gearSize * 0.55)
+            designSize: Theme.gearNumberSize
             // On the gear letter's baseline, from its metrics rather than a
             // fraction of the nominal size, which every face reads differently.
             anchors.baseline: gearText.baseline
@@ -135,7 +135,7 @@ Item {
         visible: root.message !== ""
         text: root.message
         color: "#F5A623"
-        designSize: 22
+        designSize: Theme.messageSize
         x: Theme.centreX - width / 2
         y: 615
     }

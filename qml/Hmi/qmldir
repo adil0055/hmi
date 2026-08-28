@@ -3,6 +3,7 @@ module Hmi
 singleton Theme 1.0 Theme.qml
 singleton Fmt 1.0 Fmt.qml
 singleton BmwTheme 1.0 BmwTheme.qml
+singleton TextSizes 1.0 TextSizes.qml
 
 Arc 1.0 Arc.qml
 Bezel 1.0 Bezel.qml
@@ -24,5 +25,6 @@ MiniArcGauge 1.0 MiniArcGauge.qml
 Needle 1.0 Needle.qml
 Telltale 1.0 Telltale.qml
 TelltaleBar 1.0 TelltaleBar.qml
+TextSizeWindow 1.0 TextSizeWindow.qml
 TickRing 1.0 TickRing.qml
 ShootHarness 1.0 ShootHarness.qml

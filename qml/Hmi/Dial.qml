@@ -22,7 +22,7 @@ Item {
 
     property string valueText: "0"
     property string unitText: "km/h"
-    property int valueSize: Theme.valueSize
+    property real valueSize: Theme.valueSize
     property color accent: Theme.accent
     /*! Centre of the specular arc on the rim, in scene degrees. */
     property real highlightCentre: 130

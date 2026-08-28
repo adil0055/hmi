@@ -24,7 +24,7 @@ from PySide6.QtCore import QSize, QTimer, QUrl  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
 
-from backend import FontManager, VehicleState  # noqa: E402
+from backend import FontManager, TextSizeManager, VehicleState  # noqa: E402
 
 
 def coerce(text: str):
@@ -50,6 +50,10 @@ def main() -> int:
                         help="font file(s) or a directory to render with")
     parser.add_argument("--font-family", default="", metavar="ID",
                         help="render with a catalogue typeface (see assets/fonts/catalog.json)")
+    parser.add_argument("--text-scale", type=float, default=1.0, metavar="N",
+                        help="scale every run of text (0.6..1.8)")
+    parser.add_argument("--text-size", nargs="*", default=[], metavar="ID=SIZE",
+                        help="size one run of text (ids are in qml/Hmi/TextSizes.qml)")
     args = parser.parse_args()
 
     app = QGuiApplication(sys.argv[:1])
@@ -66,6 +70,19 @@ def main() -> int:
             names = ", ".join(entry["id"] for entry in fonts.catalog)
             print(f"error: unknown typeface {args.font_family!r}; try: {names}", file=sys.stderr)
             return 2
+
+    # persist=False here too: a screenshot must not rewrite the saved sizes.
+    sizes = TextSizeManager(persist=False)
+    sizes.scale = args.text_scale
+    overrides = {}
+    for pair in args.text_size:
+        key, _, raw = pair.partition("=")
+        try:
+            overrides[key] = float(raw)
+        except ValueError:
+            print(f"error: expected ID=SIZE, got {pair!r}", file=sys.stderr)
+            return 2
+    sizes.setOverrides(overrides)
 
     vehicle = VehicleState()
     for pair in args.set:
@@ -84,6 +101,7 @@ def main() -> int:
     ctx = view.engine().rootContext()
     ctx.setContextProperty("Vehicle", vehicle)
     ctx.setContextProperty("Fonts", fonts)
+    ctx.setContextProperty("Sizes", sizes)
     ctx.setContextProperty("appAssetPath", QUrl.fromLocalFile(str(ROOT / "assets")).toString())
 
     view.setSource(QUrl.fromLocalFile(str(ROOT / "qml" / "Hmi" / "ShootHarness.qml")))

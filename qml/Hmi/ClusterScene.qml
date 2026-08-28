@@ -157,12 +157,12 @@ Item {
                 id: cruiseValue
                 text: root.vehicle ? String(root.vehicle.cruiseSetSpeed) : "0"
                 color: root.vehicle && root.vehicle.cruiseActive ? "#4CD964" : Theme.textDim
-                designSize: 40
+                designSize: Theme.cruiseValueSize
             }
             ClusterText {
                 text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
                 color: Theme.textDim
-                designSize: 19
+                designSize: Theme.cruiseUnitSize
                 anchors.baseline: cruiseValue.baseline
             }
         }
@@ -174,7 +174,7 @@ Item {
             visible: root.vehicle ? root.vehicle.sportShiftLights : false
             text: "▲"
             color: Theme.danger
-            font.pixelSize: 34
+            font.pixelSize: Theme.shiftPromptSize
             x: Theme.dialCxRight - width / 2
             y: Theme.dialCy - 160
             SequentialAnimation on opacity {

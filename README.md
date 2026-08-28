@@ -67,11 +67,13 @@ On Fedora: `sudo dnf install mesa-libEGL mesa-libGL libxkbcommon-x11 fontconfig`
 | Flag | Effect |
 | --- | --- |
 | `--no-panel` | cluster only, no control panel |
+| `--size-panel` | also open the text-size panel |
 | `--fullscreen` | open the cluster full screen |
 | `--scale N` | force the render scale instead of fitting the window |
 | `--screenshot FILE` | render one frame to a PNG and exit (works headless) |
 | `--font FILE...` | start with your own typeface (files, or a folder of them) |
 | `--font-family ID` | start on a bundled typeface (`inter`, `teko`, `rajdhani`, …) |
+| `--text-scale N` | scale every run of text at once (0.6–1.8) |
 | `--skin NAME` | which cluster to draw: `classic` or `bmw` |
 
 Keys in the cluster window: **F11** full screen, **Esc** leave full screen,
@@ -122,7 +124,7 @@ recuperation, so the percentage in the status strip means something. In
 
 ---
 
-## The two windows
+## The windows
 
 **Cluster** — the display itself, scaled uniformly to whatever size the window
 is, so proportions never shift.
@@ -139,6 +141,10 @@ is, so proportions never shift.
 
 Everything else — fuel, temperatures, lighting, doors, belts, every warning
 lamp, cruise control, units — is settable at any time in either mode.
+
+**Size panel** — opened from **Text sizes…** in the test panel, or with
+`--size-panel`. Lists every run of text in both clusters with the size it is
+currently set at and a slider each; see [Text sizes](#text-sizes).
 
 ---
 
@@ -280,6 +286,78 @@ it would leave you no way to read the button that undoes the change.
 
 ---
 
+## Text sizes
+
+Switching typeface changes what a size *means*. A face chosen for its numerals
+often wants its captions a little smaller; a condensed face can take a couple
+of points more before it fills the same slot. So the sizes the artwork was
+drawn at are defaults rather than constants, and both the whole set and each
+run on its own can be moved.
+
+**All text** in the test panel scales every run at once, between 0.6x and 1.8x.
+That is the knob for "this face reads small, bring the cluster up a bit".
+
+**Text sizes…** opens a second panel listing all 36 runs of text in the two
+clusters — speed digits, scale numerals, trip labels, status bar, each of them
+— grouped by where they appear, with a slider each and the size each one is
+currently set at. Filter it to the skin you are looking at, or show both.
+
+### Three numbers per row
+
+"Font size" means three different things once the typeface is switchable, so
+each row shows all three:
+
+| Column | What it is |
+| --- | --- |
+| **design** | what the artwork asks for, and the number the slider edits |
+| **→ N px** | what actually reaches `font.pixelSize`, after `Theme.px()` scales the design size by how tall the loaded face draws its capitals |
+| **on screen** | that again times the cluster window's render scale — what you could measure on the glass |
+
+The gap between the first two is the point: a face with small capitals is
+*set* larger to look the same size. The header shows that correction as a
+single figure (`×1.000` for the reference face), which is usually the answer to
+"why did swapping face not change anything".
+
+Each row also carries a specimen in the face that run is really drawn in, at
+the size it is really drawn at, so the number and the thing it describes are in
+the same place.
+
+Rows moved off their drawn size are outlined and marked **drawn at N**;
+**Reset** on the row puts one back, **Reset all** puts everything back
+including the scale. Sliders run from half to double the drawn size — enough to
+rebalance a face, not enough to lose a run off the canvas and wonder where it
+went.
+
+Sizes are remembered between runs, exactly like the typeface, and can be set
+from the command line for screenshots:
+
+```bash
+python3 main.py --text-scale 1.2 --font-family teko
+python3 tools/shoot.py shot.png --text-scale 1.15
+python3 tools/shoot.py shot.png --text-size classic.dial.speed=110 classic.info.unit=18
+```
+
+### Where they live
+
+Every run of text is one entry in `qml/Hmi/TextSizes.qml`, with a stable id,
+the size the artwork was drawn at, and the label and description the panel
+lists it under. `Theme` and `BmwTheme` expose those as the size properties they
+always had — `Theme.gearSize`, `BmwTheme.statusSize` — so the drawing code is
+unchanged and still reads a name rather than a number. The difference is that
+those properties are now bindings, so a nudge in the panel reflows the cluster
+immediately.
+
+Adding a run of text therefore means adding a row to `TextSizes.qml` and a
+one-line binding to the theme, rather than writing a literal into the artwork.
+A literal still works, but the panel cannot see it and the user cannot adjust
+it.
+
+The state itself — the scale and the per-run overrides — belongs to
+`backend/sizes.py`, which owns the `QSettings` write; `Main.qml` pushes it into
+the singleton the same way it pushes the typeface into `Theme`.
+
+---
+
 ## Layout
 
 ```
@@ -288,11 +366,13 @@ backend/
   vehicle.py            VehicleState — every cluster signal as a Qt property
   simulator.py          engine, gearbox, road load, fuel, trip computer
   fonts.py              FontManager — the catalogue, custom faces, and metrics
+  sizes.py              TextSizeManager — the text scale and per-run overrides
 qml/
-  Main.qml              the two windows
+  Main.qml              the three windows
   Hmi/
     Theme.qml           classic geometry and colour, plus the font adaptation
     BmwTheme.qml        BMW geometry and colour, and the chevron polygon
+    TextSizes.qml       every run of text, with the size it was drawn at
     Fmt.qml             unit conversion and display formatting
     ClusterText.qml     text that holds its size and place across typefaces
     ClusterWindow.qml   hosts whichever skin is selected, and scales it
@@ -310,6 +390,7 @@ qml/
     BmwStatusBar.qml    charge, clock, mode, temperature, range
     TelltaleBar.qml     the warning lamp strip, shared by both skins
     ControlWindow.qml   the test panel, including the typeface dropdown
+    TextSizeWindow.qml  the size panel: every run of text, and a slider each
 assets/
   fonts/
     catalog.json        the fourteen families, with licence and provenance
@@ -327,6 +408,9 @@ tools/
 `qml/Hmi/Theme.qml` and `qml/Hmi/BmwTheme.qml` hold every coordinate, radius,
 font size and colour their cluster draws with, in design-canvas pixels. Nothing
 else contains a magic number, so moving an element is a one-line change there.
+Text sizes are the one thing declared elsewhere — in `qml/Hmi/TextSizes.qml`,
+so the size panel can list and adjust them — but they still reach the artwork
+as a named property on the theme.
 
 Sizes in those files are *design* sizes, quoted against the reference face. Set
 text with `ClusterText`'s `designSize` rather than `font.pixelSize`, and where

@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Hmi
 
 /*!
     Palette and geometry for the BMW-style cluster.
@@ -11,7 +12,9 @@ import QtQuick
 
     Same convention as Theme though: everything is in design pixels on a fixed
     \l designW x \l designH canvas, and the scene as a whole is scaled to the
-    window, so nothing here has to know the output resolution.
+    window, so nothing here has to know the output resolution — and, as there,
+    the text sizes are bindings into \l TextSizes so the size panel can move
+    them.
 */
 QtObject {
     id: bmw
@@ -77,8 +80,9 @@ QtObject {
     readonly property real tickGap: 16          // between numerals and ticks
     readonly property real majorTickLen: 22
     readonly property real minorTickLen: 11
-    readonly property int scaleLabelSize: 21
-    readonly property int gaugeLabelSize: 20    // the "km/h" / "ePower" caption
+    readonly property real scaleLabelSize: TextSizes.size("bmw.scale.label")
+    /*! The "km/h" / "ePower" caption. */
+    readonly property real gaugeLabelSize: TextSizes.size("bmw.gauge.caption")
 
     readonly property real speedMax: 220
     readonly property real powerMax: 100
@@ -86,19 +90,26 @@ QtObject {
     // -------------------------------------------------------------- readouts
     readonly property real speedX: 176
     readonly property real speedY: 322
-    readonly property int speedSize: 116
-    readonly property int speedUnitSize: 26
+    readonly property real speedSize: TextSizes.size("bmw.speed.value")
+    readonly property real speedUnitSize: TextSizes.size("bmw.speed.unit")
     readonly property real gearX: designW - 150
     readonly property real gearY: 322
-    readonly property int gearSize: 108
+    readonly property real gearSize: TextSizes.size("bmw.gear")
+    readonly property real gearNumberSize: TextSizes.size("bmw.gear.number")
+
+    readonly property real cruiseValueSize: TextSizes.size("bmw.cruise.value")
+    readonly property real cruiseUnitSize: TextSizes.size("bmw.cruise.unit")
+    readonly property real messageSize: TextSizes.size("bmw.message")
 
 
     // ----------------------------------------------------------- centre stack
     readonly property real centreX: designW / 2
     readonly property real artY: 232
     readonly property real artSize: 128
-    readonly property int trackTitleSize: 25
-    readonly property int trackArtistSize: 21
+    readonly property real trackTitleSize: TextSizes.size("bmw.track.title")
+    readonly property real trackArtistSize: TextSizes.size("bmw.track.artist")
+    readonly property real trackRemainingSize: TextSizes.size("bmw.track.remaining")
+    readonly property real trackPausedSize: TextSizes.size("bmw.track.paused")
     readonly property real trackTitleY: 404
     readonly property real trackArtistY: 436
     readonly property real progressY: 474
@@ -107,7 +118,9 @@ QtObject {
     // ------------------------------------------------------------ status bar
     readonly property real statusY: 646
     readonly property real statusRuleY: 612
-    readonly property int statusSize: 22
+    readonly property real statusSize: TextSizes.size("bmw.status.value")
+    readonly property real statusModeSize: TextSizes.size("bmw.status.mode")
+    readonly property real statusUnitSize: TextSizes.size("bmw.status.unit")
     readonly property real statusInset: 92
 
     // -------------------------------------------------------------- telltales

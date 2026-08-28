@@ -37,5 +37,8 @@ Item {
         Theme.fontFamily = Fonts.family
         Theme.uiFontFamily = Fonts.uiFamily
         Theme.fontMetrics = Fonts.metrics
+        // Text sizes likewise, so a shot matches what the app would draw.
+        TextSizes.scale = Sizes.scale
+        TextSizes.overrides = Sizes.overrides
     }
 }

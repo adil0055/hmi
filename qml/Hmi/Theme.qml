@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Hmi
 
 /*!
     Every colour, coordinate and size the cluster draws with.
@@ -7,7 +8,10 @@ import QtQuick
     The cluster is laid out on a fixed \l designW x \l designH canvas and then
     scaled uniformly to the window, so all values below are in design pixels
     and nothing needs to be recomputed when the window resizes.  Nudging the
-    artwork means editing this file and nothing else.
+    artwork means editing this file and nothing else — with one exception.
+    Text sizes are adjustable at runtime, so each is declared once in
+    \l TextSizes, with the label and description the size panel lists it
+    under, and appears here as a binding into that rather than as a literal.
 */
 QtObject {
     id: theme
@@ -124,7 +128,7 @@ QtObject {
     readonly property real minorLen: 13
     readonly property real minorWidth: 2.4
     readonly property real labelRadius: 189
-    readonly property int labelSize: 34
+    readonly property real labelSize: TextSizes.size("classic.dial.label")
     readonly property real innerRadius: 128
 
     // Scale sweep: 0 sits low-left, maximum low-right, midpoint straight up.
@@ -132,9 +136,9 @@ QtObject {
     readonly property real endAngle: -35
     readonly property real sweep: startAngle - endAngle   // 250 degrees
 
-    readonly property int valueSize: 96          // big speed digits
-    readonly property int rpmValueSize: 88
-    readonly property int unitSize: 23
+    readonly property real valueSize: TextSizes.size("classic.dial.speed")
+    readonly property real rpmValueSize: TextSizes.size("classic.dial.rpm")
+    readonly property real unitSize: TextSizes.size("classic.dial.unit")
     readonly property real valueDy: -8           // value centre, from dial centre
     readonly property real unitDy: 62
 
@@ -150,32 +154,35 @@ QtObject {
     readonly property int arcSegments: 15
     readonly property real miniLabelDy: 186      // E / F row, below dial centre
     readonly property real miniLabelDx: 100
-    readonly property int miniLabelSize: 24
+    readonly property real miniLabelSize: TextSizes.size("classic.mini.label")
     readonly property real miniIconSize: 32
 
     // --------------------------------------------------------- centre column
     readonly property real centreX: 895
     readonly property real gearX: 712
     readonly property real topRowY: 258
-    readonly property int gearSize: 72
+    readonly property real gearSize: TextSizes.size("classic.gear")
+    readonly property real gearNumberSize: TextSizes.size("classic.gear.number")
     readonly property real rangeIconX: 852
-    readonly property int rangeSize: 54
-    readonly property int rangeUnitSize: 24
+    readonly property real rangeSize: TextSizes.size("classic.range.value")
+    readonly property real rangeUnitSize: TextSizes.size("classic.range.unit")
 
     readonly property real driveInfoY: 337
-    readonly property int driveInfoSize: 31
+    readonly property real driveInfoSize: TextSizes.size("classic.driveinfo")
 
     readonly property real infoLabelX: 766
     readonly property real infoValueRight: 986
     readonly property real infoUnitX: 996
     readonly property var infoRowY: [403, 459, 515]
-    readonly property int infoLabelSize: 28
-    readonly property int infoValueSize: 36
-    readonly property int infoUnitSize: 21
+    readonly property real infoLabelSize: TextSizes.size("classic.info.label")
+    readonly property real infoValueSize: TextSizes.size("classic.info.value")
+    readonly property real infoUnitSize: TextSizes.size("classic.info.unit")
+
+    readonly property real messageSize: TextSizes.size("classic.message")
 
     readonly property rect ecoBarRect: Qt.rect(768, 549, 275, 16)
     readonly property real ecoScaleY: 583
-    readonly property int ecoScaleSize: 20
+    readonly property real ecoScaleSize: TextSizes.size("classic.eco.scale")
     readonly property int ecoMax: 30
 
     // ----------------------------------------------------------- lane render
@@ -189,8 +196,8 @@ QtObject {
     readonly property real bottomBarRadius: 32
     readonly property real bottomTextRight: 1090
     readonly property var bottomRowY: [707, 744]
-    readonly property int bottomValueSize: 34
-    readonly property int bottomUnitSize: 20
+    readonly property real bottomValueSize: TextSizes.size("classic.bottom.value")
+    readonly property real bottomUnitSize: TextSizes.size("classic.bottom.unit")
 
     // ------------------------------------------------------------- telltales
     readonly property real telltaleY: 118
@@ -205,6 +212,11 @@ QtObject {
     // Cruise readout lives in the free left half of the bottom panel.
     readonly property real cruiseX: 650
     readonly property real cruiseY: 725
+    readonly property real cruiseValueSize: TextSizes.size("classic.cruise.value")
+    readonly property real cruiseUnitSize: TextSizes.size("classic.cruise.unit")
+
+    /*! The shift-up arrow, which stays in the UI face — see ClusterScene. */
+    readonly property real shiftPromptSize: TextSizes.size("classic.shift")
 
     // -------------------------------------------------------------- helpers
     /*! Angle in degrees for \a value on a scale running \a lo .. \a hi. */

@@ -272,10 +272,10 @@ Item {
                      ? (root.vehicle.gearMode === "D" && root.vehicle.gearNumber > 0)
                      : false
             text: root.vehicle ? String(root.vehicle.gearNumber) : ""
-            designSize: 30
+            designSize: BmwTheme.gearNumberSize
             color: root.accentRight
             x: -width / 2
-            y: 62 + Theme.capDy(30)
+            y: 62 + Theme.capDy(BmwTheme.gearNumberSize)
             Behavior on color { ColorAnimation { duration: 420 } }
         }
     }
@@ -311,7 +311,7 @@ Item {
             id: message
             anchors.centerIn: parent
             text: root.vehicle ? root.vehicle.message : ""
-            designSize: 21
+            designSize: BmwTheme.messageSize
             color: "#F5A623"
         }
     }
@@ -363,14 +363,14 @@ Item {
         ClusterText {
             id: cruiseValue
             text: root.vehicle ? String(root.vehicle.cruiseSetSpeed) : "0"
-            designSize: 30
+            designSize: BmwTheme.cruiseValueSize
             color: root.vehicle && root.vehicle.cruiseActive ? "#3FD9A0" : BmwTheme.textDim
             Behavior on color { ColorAnimation { duration: 240 } }
         }
 
         ClusterText {
             text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
-            designSize: 16
+            designSize: BmwTheme.cruiseUnitSize
             color: BmwTheme.textDim
             anchors.baseline: cruiseValue.baseline
         }

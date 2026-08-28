@@ -2,6 +2,7 @@
 
 from .fonts import FontManager
 from .simulator import Simulator
+from .sizes import TextSizeManager
 from .vehicle import VehicleState
 
-__all__ = ["FontManager", "Simulator", "VehicleState"]
+__all__ = ["FontManager", "Simulator", "TextSizeManager", "VehicleState"]

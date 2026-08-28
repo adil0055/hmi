@@ -103,11 +103,11 @@ Item {
     // ------------------------------------------------------------ the mode
     ClusterText {
         text: root.driveMode.toUpperCase()
-        designSize: 18
+        designSize: BmwTheme.statusModeSize
         color: root.accent
         font.letterSpacing: 2.4
         x: BmwTheme.centreX - width / 2
-        y: BmwTheme.statusY - height / 2 + Theme.capDy(18)
+        y: BmwTheme.statusY - height / 2 + Theme.capDy(BmwTheme.statusModeSize)
         Behavior on color { ColorAnimation { duration: 320 } }
     }
 
@@ -120,7 +120,7 @@ Item {
 
         ClusterText {
             text: root.rangeUnit
-            designSize: 17
+            designSize: BmwTheme.statusUnitSize
             color: BmwTheme.textDim
             anchors.baseline: rangeValue.baseline
         }
@@ -154,7 +154,7 @@ Item {
 
         ClusterText {
             text: root.tempUnit
-            designSize: 17
+            designSize: BmwTheme.statusUnitSize
             color: BmwTheme.textDim
             anchors.baseline: tempValue.baseline
         }

@@ -8,6 +8,7 @@ Run with::
 Options::
 
     --no-panel       start without the control panel window
+    --size-panel     also open the text-size panel
     --fullscreen     open the cluster full screen
     --scale N        force the cluster render scale (default: fit the screen)
     --screenshot F   render one frame to F and exit (works headless)
@@ -24,7 +25,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow
 
-from backend import FontManager, Simulator, VehicleState
+from backend import FontManager, Simulator, TextSizeManager, VehicleState
 
 ROOT = Path(__file__).resolve().parent
 QML_DIR = ROOT / "qml"
@@ -34,6 +35,8 @@ FONT_DIR = ROOT / "assets" / "fonts"
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Car HMI instrument cluster")
     parser.add_argument("--no-panel", action="store_true", help="hide the control panel")
+    parser.add_argument("--size-panel", action="store_true",
+                        help="also open the text-size panel")
     parser.add_argument("--fullscreen", action="store_true", help="cluster full screen")
     parser.add_argument("--scale", type=float, default=0.0, help="force render scale")
     parser.add_argument("--screenshot", default="", help="render one frame to a PNG and exit")
@@ -44,6 +47,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
                         help="start on a catalogue typeface (see assets/fonts/catalog.json)")
     parser.add_argument("--skin", default="", choices=["", "classic", "bmw"],
                         help="which cluster to draw (default: whichever was last used)")
+    parser.add_argument("--text-scale", type=float, default=0.0, metavar="N",
+                        help="scale every run of text (0.6..1.8); remembered, like the panel")
     return parser.parse_args(argv)
 
 
@@ -69,6 +74,10 @@ def main(argv: list[str] | None = None) -> int:
                   file=sys.stderr)
             return 2
 
+    sizes = TextSizeManager()
+    if args.text_scale:
+        sizes.scale = args.text_scale
+
     vehicle = VehicleState()
     if args.skin:
         vehicle.skin = args.skin
@@ -80,8 +89,10 @@ def main(argv: list[str] | None = None) -> int:
     ctx = engine.rootContext()
     ctx.setContextProperty("Vehicle", vehicle)
     ctx.setContextProperty("Fonts", fonts)
+    ctx.setContextProperty("Sizes", sizes)
     ctx.setContextProperty("appAssetPath", QUrl.fromLocalFile(str(ROOT / "assets")).toString())
     ctx.setContextProperty("appShowPanel", not args.no_panel)
+    ctx.setContextProperty("appShowSizePanel", args.size_panel)
     ctx.setContextProperty("appFullscreen", args.fullscreen)
     ctx.setContextProperty("appForcedScale", float(args.scale))
 

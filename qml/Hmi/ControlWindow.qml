@@ -19,6 +19,9 @@ Window {
 
     property var vehicle: null
 
+    /*! Raised when the text-size panel is asked for; Main.qml owns the window. */
+    signal openTextSizes()
+
     title: qsTr("HMI Test Panel")
     width: 470
     height: Math.min(1000, Screen.desktopAvailableHeight - 80)
@@ -427,6 +430,50 @@ Window {
                            + "re-measures the face and re-aligns itself around it, so sizes "
                            + "and baselines hold. The choice is remembered next time, and the "
                            + "panel keeps its own font so it stays readable.")
+                color: root.labelColor
+                font.family: Theme.uiFontFamily
+                font.pixelSize: 10
+                wrapMode: Text.Wrap
+                opacity: 0.75
+            }
+
+            // ---------------------------------------------------- text sizes
+            SectionBox { title: qsTr("Text size") }
+
+            Slider2 {
+                label: qsTr("All text")
+                from: 0.6
+                to: 1.8
+                decimals: 2
+                value: Sizes.scale
+                onMoved: function (v) { Sizes.scale = v }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Action {
+                    Layout.fillWidth: true
+                    text: qsTr("Text sizes…")
+                    onClicked: root.openTextSizes()
+                }
+                Action {
+                    Layout.fillWidth: true
+                    text: Sizes.overrideCount > 0
+                          ? qsTr("Reset sizes (%1)").arg(Sizes.overrideCount)
+                          : qsTr("Reset sizes")
+                    enabled: Sizes.modified
+                    opacity: enabled ? 1 : 0.45
+                    onClicked: Sizes.resetAll()
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("The slider scales every run of text at once. For one run at a "
+                           + "time — the speed digits, the trip units, the status bar — open "
+                           + "the size panel, which lists all %1 of them with the size each "
+                           + "is currently set at.").arg(TextSizes.roles.length)
                 color: root.labelColor
                 font.family: Theme.uiFontFamily
                 font.pixelSize: 10
