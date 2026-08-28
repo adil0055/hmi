@@ -34,8 +34,11 @@ QtObject {
     property TextSizeWindow sizePanel: TextSizeWindow {
         cluster: app.cluster
         visible: appShowSizePanel
-        x: Math.max(0, Screen.desktopAvailableWidth - width - 20)
-        y: 40
+        // Immediately left of the control panel: the two are used together —
+        // pick a face in one, rebalance its sizes in the other — so opening
+        // this must not bury the window it was opened from.
+        x: Math.max(0, app.panel.x - width - 12)
+        y: app.panel.y
     }
 
     /*!
