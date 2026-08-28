@@ -62,15 +62,14 @@ Item {
     // Scale numerals.
     Repeater {
         model: [0, 10, 20, 30]
-        delegate: Text {
+        delegate: ClusterText {
             required property int index
             required property var modelData
             text: String(modelData)
             color: Theme.textDim
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.ecoScaleSize
+            designSize: Theme.ecoScaleSize
             x: root.r.x + root.r.width * index / 3 - width / 2
-            y: Theme.ecoScaleY - height / 2
+            y: Theme.ecoScaleY - height / 2 + Theme.capDy(Theme.ecoScaleSize)
         }
     }
 }

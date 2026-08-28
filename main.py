@@ -40,6 +40,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--shot-delay", type=int, default=900, help="ms before --screenshot")
     parser.add_argument("--font", nargs="*", default=None, metavar="FILE",
                         help="font file(s) or a directory to use instead of the bundled one")
+    parser.add_argument("--font-family", default="", metavar="ID",
+                        help="start on a catalogue typeface (see assets/fonts/catalog.json)")
+    parser.add_argument("--skin", default="", choices=["", "classic", "bmw"],
+                        help="which cluster to draw (default: whichever was last used)")
     return parser.parse_args(argv)
 
 
@@ -58,8 +62,16 @@ def main(argv: list[str] | None = None) -> int:
             fonts.loadFiles(args.font)
         if fonts.status:
             print(fonts.status)
+    elif args.font_family:
+        if not fonts.selectFamily(args.font_family):
+            names = ", ".join(entry["id"] for entry in fonts.catalog)
+            print(f"error: unknown typeface {args.font_family!r}; try one of: {names}",
+                  file=sys.stderr)
+            return 2
 
     vehicle = VehicleState()
+    if args.skin:
+        vehicle.skin = args.skin
     simulator = Simulator(vehicle)
 
     engine = QQmlApplicationEngine()

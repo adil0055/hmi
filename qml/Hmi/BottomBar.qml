@@ -40,24 +40,23 @@ Item {
             required property var modelData
             readonly property real cy: Theme.bottomRowY[modelData.row]
 
-            Text {
+            ClusterText {
+                id: valueText
+                text: modelData.value
+                designSize: Theme.bottomValueSize
+                x: unitText.x - 5 - width
+                y: parent.cy - height / 2 + Theme.capDy(Theme.bottomValueSize)
+            }
+
+            ClusterText {
                 id: unitText
                 text: modelData.unit
                 color: Theme.textDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.bottomUnitSize
+                designSize: Theme.bottomUnitSize
                 x: Theme.bottomTextRight - width
-                // Sit the unit on the value's baseline.
-                y: parent.cy + Theme.bottomValueSize * 0.33 - height
-            }
-
-            Text {
-                text: modelData.value
-                color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.bottomValueSize
-                x: unitText.x - 5 - width
-                y: parent.cy - height / 2
+                // Sit the unit on the value's baseline — Qt derives that from
+                // the face's own metrics, so it holds for any of them.
+                anchors.baseline: valueText.baseline
             }
         }
     }

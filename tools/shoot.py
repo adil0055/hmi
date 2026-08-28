@@ -48,6 +48,8 @@ def main() -> int:
     parser.add_argument("--delay", type=int, default=700, help="ms to let the scene settle")
     parser.add_argument("--font", nargs="*", default=None, metavar="FILE",
                         help="font file(s) or a directory to render with")
+    parser.add_argument("--font-family", default="", metavar="ID",
+                        help="render with a catalogue typeface (see assets/fonts/catalog.json)")
     args = parser.parse_args()
 
     app = QGuiApplication(sys.argv[:1])
@@ -58,6 +60,11 @@ def main() -> int:
         ok = fonts.loadPath(args.font[0]) if len(args.font) == 1 else fonts.loadFiles(args.font)
         print(fonts.status)
         if not ok:
+            return 2
+    elif args.font_family:
+        if not fonts.selectFamily(args.font_family):
+            names = ", ".join(entry["id"] for entry in fonts.catalog)
+            print(f"error: unknown typeface {args.font_family!r}; try: {names}", file=sys.stderr)
             return 2
 
     vehicle = VehicleState()
@@ -85,8 +92,10 @@ def main() -> int:
             print(err.toString(), file=sys.stderr)
         return 1
 
-    height = round(args.width * 870 / 1790)
-    view.resize(QSize(args.width, height))
+    # The two skins are drawn on different canvases, so the view has to take
+    # its aspect from whichever one is about to be rendered.
+    canvas = (1920, 720) if vehicle.skin == "bmw" else (1790, 870)
+    view.resize(QSize(args.width, round(args.width * canvas[1] / canvas[0])))
     view.show()
 
     def grab() -> None:

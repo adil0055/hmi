@@ -6,3 +6,7 @@ venv/
 .qmlls.ini
 shots/
 *.png.tmp
+
+# Font binaries are fetched by tools/fetch_fonts.py, not committed.
+assets/fonts/*
+!assets/fonts/catalog.json

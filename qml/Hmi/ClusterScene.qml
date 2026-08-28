@@ -13,8 +13,13 @@ Item {
 
     property var vehicle: null
 
-    width: Theme.designW
-    height: Theme.designH
+    // Declared per scene so ClusterWindow can size itself to whichever design
+    // it is showing; the two skins do not share a canvas.
+    readonly property int designW: Theme.designW
+    readonly property int designH: Theme.designH
+
+    width: designW
+    height: designH
 
     readonly property bool awake: vehicle ? vehicle.ignition > 0 : true
     readonly property color accent: vehicle ? Theme.modeAccent(vehicle.driveMode) : Theme.accent
@@ -148,23 +153,23 @@ Item {
             x: Theme.cruiseX
             y: Theme.cruiseY - height / 2
 
-            Text {
+            ClusterText {
+                id: cruiseValue
                 text: root.vehicle ? String(root.vehicle.cruiseSetSpeed) : "0"
                 color: root.vehicle && root.vehicle.cruiseActive ? "#4CD964" : Theme.textDim
-                font.family: Theme.fontFamily
-                font.pixelSize: 40
+                designSize: 40
             }
-            Text {
+            ClusterText {
                 text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
                 color: Theme.textDim
-                font.family: Theme.fontFamily
-                font.pixelSize: 19
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 7
+                designSize: 19
+                anchors.baseline: cruiseValue.baseline
             }
         }
 
-        // Shift-up prompt near the redline.
+        // Shift-up prompt near the redline.  Left in the default font on
+        // purpose: it is a geometric symbol, and a display or condensed face
+        // loaded for the numerals may well not carry the glyph at all.
         Text {
             visible: root.vehicle ? root.vehicle.sportShiftLights : false
             text: "▲"

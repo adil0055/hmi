@@ -101,13 +101,12 @@ Item {
     }
 
     // E / icon / F row.
-    Text {
+    ClusterText {
         text: root.leftLabel
         color: Theme.textSecondary
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.miniLabelSize
+        designSize: Theme.miniLabelSize
         x: root.centreX - Theme.miniLabelDx - width / 2
-        y: root.centreY + Theme.miniLabelDy - height / 2
+        y: root.centreY + Theme.miniLabelDy - height / 2 + Theme.capDy(Theme.miniLabelSize)
     }
 
     Image {
@@ -120,12 +119,11 @@ Item {
         y: root.centreY + Theme.miniLabelDy - height / 2
     }
 
-    Text {
+    ClusterText {
         text: root.rightLabel
         color: Theme.textSecondary
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.miniLabelSize
+        designSize: Theme.miniLabelSize
         x: root.centreX + Theme.miniLabelDx - width / 2
-        y: root.centreY + Theme.miniLabelDy - height / 2
+        y: root.centreY + Theme.miniLabelDy - height / 2 + Theme.capDy(Theme.miniLabelSize)
     }
 }

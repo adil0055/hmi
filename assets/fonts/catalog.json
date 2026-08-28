@@ -1,0 +1,167 @@
+{
+  "_comment": [
+    "Typefaces the cluster can be retargeted to, all under licences that allow",
+    "redistribution (SIL OFL 1.1 / Apache 2.0).  The faces real manufacturers",
+    "ship — Monotype's Burlingame and Tipperary, BMW Type Next, Hyundai Sans —",
+    "are proprietary and cannot be bundled, so where a family stands in for one",
+    "of those the 'note' says whose look it is approximating rather than",
+    "claiming to be it.  tools/fetch_fonts.py downloads everything listed here.",
+    "",
+    "'ref' is the family whose cap height defines 1.0 on the optical-size scale;",
+    "every other family is scaled to match it so swapping faces keeps the",
+    "artwork the same visual size.  See backend/fonts.py."
+  ],
+  "reference": "Titillium Web",
+  "families": [
+    {
+      "id": "titillium",
+      "name": "Titillium Web",
+      "dir": "TitilliumWeb",
+      "style": "Humanist",
+      "note": "The cluster's own face. Humanist grotesque, open apertures.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/titilliumweb",
+      "files": ["TitilliumWeb-Light.ttf", "TitilliumWeb-LightItalic.ttf",
+                "TitilliumWeb-Regular.ttf", "TitilliumWeb-Italic.ttf",
+                "TitilliumWeb-SemiBold.ttf", "TitilliumWeb-SemiBoldItalic.ttf",
+                "TitilliumWeb-Bold.ttf"]
+    },
+    {
+      "id": "inter",
+      "name": "Inter",
+      "dir": "Inter",
+      "style": "Neo-grotesque",
+      "note": "TATA.ev's brand typeface — Tata picked this open family for the EV identity.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/inter",
+      "files": ["Inter[opsz,wght].ttf", "Inter-Italic[opsz,wght].ttf"]
+    },
+    {
+      "id": "roboto",
+      "name": "Roboto",
+      "dir": "Roboto",
+      "style": "Neo-grotesque",
+      "note": "Android Automotive OS default — the face under many OEM clusters.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/roboto",
+      "files": ["Roboto[wdth,wght].ttf", "Roboto-Italic[wdth,wght].ttf"]
+    },
+    {
+      "id": "rajdhani",
+      "name": "Rajdhani",
+      "dir": "Rajdhani",
+      "style": "Squarish",
+      "note": "Indian Type Foundry. Squared technical face; Devanagari + Latin.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/rajdhani",
+      "files": ["Rajdhani-Light.ttf", "Rajdhani-Regular.ttf", "Rajdhani-Medium.ttf",
+                "Rajdhani-SemiBold.ttf", "Rajdhani-Bold.ttf"]
+    },
+    {
+      "id": "khand",
+      "name": "Khand",
+      "dir": "Khand",
+      "style": "Condensed",
+      "note": "Indian Type Foundry. Condensed, tall figures; Devanagari + Latin.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/khand",
+      "files": ["Khand-Light.ttf", "Khand-Regular.ttf", "Khand-Medium.ttf",
+                "Khand-SemiBold.ttf", "Khand-Bold.ttf"]
+    },
+    {
+      "id": "teko",
+      "name": "Teko",
+      "dir": "Teko",
+      "style": "Condensed",
+      "note": "Indian Type Foundry. Very tall and narrow — big numbers in little space.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/teko",
+      "files": ["Teko[wght].ttf"]
+    },
+    {
+      "id": "ibmplexsans",
+      "name": "IBM Plex Sans",
+      "dir": "IBMPlexSans",
+      "style": "Neo-grotesque",
+      "note": "Closest open stand-in for BMW Type Next — same cool grotesque skeleton.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/ibmplexsans",
+      "files": ["IBMPlexSans[wdth,wght].ttf", "IBMPlexSans-Italic[wdth,wght].ttf"]
+    },
+    {
+      "id": "archivo",
+      "name": "Archivo",
+      "dir": "Archivo",
+      "style": "Grotesque",
+      "note": "Wide apertures at small sizes — the Frutiger/Burlingame school.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/archivo",
+      "files": ["Archivo[wdth,wght].ttf", "Archivo-Italic[wdth,wght].ttf"]
+    },
+    {
+      "id": "barlow",
+      "name": "Barlow",
+      "dir": "Barlow",
+      "style": "Grotesque",
+      "note": "Low-contrast, slightly rounded grotesque; reads well backlit.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/barlow",
+      "files": ["Barlow-Light.ttf", "Barlow-LightItalic.ttf", "Barlow-Regular.ttf",
+                "Barlow-Italic.ttf", "Barlow-Medium.ttf", "Barlow-SemiBold.ttf",
+                "Barlow-Bold.ttf"]
+    },
+    {
+      "id": "saira",
+      "name": "Saira",
+      "dir": "Saira",
+      "style": "Technical",
+      "note": "Technical face with a width axis; suits wide gauge faces.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/saira",
+      "files": ["Saira[wdth,wght].ttf", "Saira-Italic[wdth,wght].ttf"]
+    },
+    {
+      "id": "chakrapetch",
+      "name": "Chakra Petch",
+      "dir": "ChakraPetch",
+      "style": "Squarish",
+      "note": "Cut corners and square bowls — the sport-cluster look.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/chakrapetch",
+      "files": ["ChakraPetch-Light.ttf", "ChakraPetch-LightItalic.ttf",
+                "ChakraPetch-Regular.ttf", "ChakraPetch-Italic.ttf",
+                "ChakraPetch-Medium.ttf", "ChakraPetch-SemiBold.ttf",
+                "ChakraPetch-Bold.ttf"]
+    },
+    {
+      "id": "exo2",
+      "name": "Exo 2",
+      "dir": "Exo2",
+      "style": "Technical",
+      "note": "Contemporary technical sans with a wide weight range.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/exo2",
+      "files": ["Exo2[wght].ttf", "Exo2-Italic[wght].ttf"]
+    },
+    {
+      "id": "orbitron",
+      "name": "Orbitron",
+      "dir": "Orbitron",
+      "style": "Display",
+      "note": "Geometric display face. The EV/concept-car cliche, and fun on a dial.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/orbitron",
+      "files": ["Orbitron[wght].ttf"]
+    },
+    {
+      "id": "oxanium",
+      "name": "Oxanium",
+      "dir": "Oxanium",
+      "style": "Display",
+      "note": "Angular display face; chamfered corners echo the BMW chevrons.",
+      "licence": "SIL OFL 1.1",
+      "source": "ofl/oxanium",
+      "files": ["Oxanium[wght].ttf"]
+    }
+  ]
+}

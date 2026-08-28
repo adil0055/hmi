@@ -2,12 +2,19 @@ module Hmi
 
 singleton Theme 1.0 Theme.qml
 singleton Fmt 1.0 Fmt.qml
+singleton BmwTheme 1.0 BmwTheme.qml
 
 Arc 1.0 Arc.qml
 Bezel 1.0 Bezel.qml
+BmwChevron 1.0 BmwChevron.qml
+BmwGauge 1.0 BmwGauge.qml
+BmwMediaTile 1.0 BmwMediaTile.qml
+BmwScene 1.0 BmwScene.qml
+BmwStatusBar 1.0 BmwStatusBar.qml
 BottomBar 1.0 BottomBar.qml
 CenterPanel 1.0 CenterPanel.qml
 ClusterScene 1.0 ClusterScene.qml
+ClusterText 1.0 ClusterText.qml
 ClusterWindow 1.0 ClusterWindow.qml
 ControlWindow 1.0 ControlWindow.qml
 Dial 1.0 Dial.qml

@@ -180,25 +180,22 @@ Item {
     }
 
     // ------------------------------------------------------------- readout
-    Text {
+    ClusterText {
         text: root.valueText
-        color: Theme.textPrimary
-        font.family: Theme.fontFamily
-        font.pixelSize: root.valueSize
+        designSize: root.valueSize
+        // Kept inside the inner disc whatever the face does to figure widths.
+        fitWidth: Theme.innerRadius * 1.72
         font.italic: true
         font.weight: Font.Normal
-        renderType: Text.QtRendering
         x: root.centreX - width / 2
-        y: root.centreY + Theme.valueDy - height / 2
+        y: root.centreY + Theme.valueDy - height / 2 + Theme.capDy(root.valueSize)
     }
 
-    Text {
+    ClusterText {
         text: root.unitText
         color: Theme.textDim
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.unitSize
-        renderType: Text.QtRendering
+        designSize: Theme.unitSize
         x: root.centreX - width / 2
-        y: root.centreY + Theme.unitDy - height / 2
+        y: root.centreY + Theme.unitDy - height / 2 + Theme.capDy(Theme.unitSize)
     }
 }

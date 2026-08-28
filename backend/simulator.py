@@ -55,6 +55,7 @@ class Simulator(QObject):
         self.v = vehicle
         self._speed_ms = 0.0  # signed: negative while reversing
         self._rpm = 0.0
+        self._epower = 0.0  # -1 full recuperation .. 1 full power
         self._trip_m = 0.0
         self._odo_m = vehicle.odometer * 1000.0
         self._trip_ms = 0
@@ -115,11 +116,54 @@ class Simulator(QObject):
 
         self._update_engine(dt)
         self._update_motion(dt)
+        self._update_epower(dt)
         self._update_fuel(dt)
         self._update_temps(dt)
         self._advance_trip(dt)
         self._update_range()
         self._publish()
+
+    # ---------------------------------------------------------------- ePower
+    def _update_epower(self, dt: float) -> None:
+        """Drive the BMW skin's power gauge and state of charge.
+
+        No separate electric powertrain is modelled: the gauge is a second
+        reading of the same physics.  Demand comes from the throttle, weighted
+        by how much of the motor's output is going into pushing through drag
+        rather than into acceleration, so the same pedal reads higher further
+        up the speed range.  The negative half is recuperation — strong under
+        braking, gentle on a lift-off, and fading out as the car comes to rest,
+        because a stationary car recovers nothing.
+        """
+        v = self.v
+        speed = abs(self._speed_ms)
+        rolling = min(1.0, speed / 8.0)
+
+        if v.ignition < 2:
+            target = 0.0
+        elif v.brake > 0.02 and rolling > 0.0:
+            target = -min(1.0, v.brake * 1.5) * rolling
+        elif v.throttle > 0.02 and v.gearMode in ("D", "R"):
+            target = min(1.0, v.throttle * (0.55 + 0.45 * min(1.0, speed / 25.0)))
+        elif rolling > 0.0:
+            target = -0.20 * rolling          # one-pedal lift-off regeneration
+        else:
+            target = 0.0
+
+        # The gauge lags the pedal slightly, the way a real power meter does,
+        # and falls back faster than it rises.
+        rate = 3.2 if target > self._epower else 2.4
+        self._epower += max(-rate * dt, min(rate * dt, target - self._epower))
+        self._epower = max(-1.0, min(1.0, self._epower))
+
+        # Charge follows the gauge, so the percentage in the status strip means
+        # something.  Scaled so flat-out empties a pack in a plausible ~40
+        # minutes and a charger fills it in ~30, rather than either happening
+        # fast enough to watch.  Read back off the model each tick the way the
+        # fuel burn does, so moving the slider on the panel is picked up rather
+        # than fought over.
+        delta = dt / 1800.0 if v.chargingNow else -self._epower * dt / 2400.0
+        v.batteryLevel = max(0.0, min(1.0, v.batteryLevel + delta))
 
     # ---------------------------------------------------------------- engine
     def _update_engine(self, dt: float) -> None:
@@ -321,3 +365,4 @@ class Simulator(QObject):
         v = self.v
         v.speed = round(abs(self._speed_ms) * 3.6, 1)
         v.rpm = round(self._rpm, 0)
+        v.ePower = round(self._epower, 3)

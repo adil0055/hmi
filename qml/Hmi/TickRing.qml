@@ -86,7 +86,7 @@ Item {
     // -------------------------------------------------------------- numerals
     Repeater {
         model: root.majorCount
-        delegate: Text {
+        delegate: ClusterText {
             required property int index
             readonly property real value: root.minValue + index * root.majorStep
             readonly property real angle: Theme.angleFor(value, root.minValue, root.maxValue)
@@ -94,13 +94,11 @@ Item {
             text: root.labelText(value)
             // Numerals stay white even inside the red band; only the ticks and
             // the outer arc carry the warning colour.
-            color: Theme.textPrimary
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.labelSize
+            designSize: Theme.labelSize
             font.weight: Font.Normal
-            renderType: Text.QtRendering
             x: Theme.polarX(root.centreX, Theme.labelRadius, angle) - width / 2
             y: Theme.polarY(root.centreY, Theme.labelRadius, angle) - height / 2
+               + Theme.capDy(Theme.labelSize)
         }
     }
 }

@@ -35,6 +35,9 @@ QtObject {
     function syncFonts() {
         Theme.fontFamily = Fonts.family
         Theme.uiFontFamily = Fonts.uiFamily
+        // Sizes and offsets across the cluster are derived from these, so the
+        // artwork re-aligns itself around whatever face has just been loaded.
+        Theme.fontMetrics = Fonts.metrics
     }
 
     property Connections fontWatch: Connections {

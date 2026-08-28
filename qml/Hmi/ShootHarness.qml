@@ -5,17 +5,30 @@ import Hmi
 Item {
     id: harness
 
-    Rectangle { anchors.fill: parent; color: Theme.black }
+    readonly property string skin: Vehicle ? Vehicle.skin : "classic"
+    readonly property int canvasW: scene.item ? scene.item.designW : Theme.designW
+    readonly property int canvasH: scene.item ? scene.item.designH : Theme.designH
+
+    Rectangle {
+        anchors.fill: parent
+        color: harness.skin === "bmw" ? BmwTheme.background : Theme.black
+    }
 
     Item {
         anchors.centerIn: parent
-        width: Theme.designW
-        height: Theme.designH
-        scale: Math.min(harness.width / Theme.designW, harness.height / Theme.designH)
+        width: harness.canvasW
+        height: harness.canvasH
+        scale: Math.min(harness.width / harness.canvasW, harness.height / harness.canvasH)
         transformOrigin: Item.Center
 
-        ClusterScene { vehicle: Vehicle }
+        Loader {
+            id: scene
+            sourceComponent: harness.skin === "bmw" ? bmwScene : classicScene
+        }
     }
+
+    Component { id: classicScene; ClusterScene { vehicle: Vehicle } }
+    Component { id: bmwScene; BmwScene { vehicle: Vehicle } }
 
     Component.onCompleted: {
         Theme.assetPath = appAssetPath
@@ -23,5 +36,6 @@ Item {
         // has to be an assignment rather than a binding.
         Theme.fontFamily = Fonts.family
         Theme.uiFontFamily = Fonts.uiFamily
+        Theme.fontMetrics = Fonts.metrics
     }
 }

@@ -28,24 +28,22 @@ Item {
     Row {
         spacing: 4
         x: Theme.gearX - width / 2
-        y: Theme.topRowY - height / 2
+        y: Theme.topRowY - height / 2 + Theme.capDy(Theme.gearSize)
 
-        Text {
+        ClusterText {
+            id: gearText
             text: root.gear
-            color: Theme.textPrimary
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.gearSize
-            renderType: Text.QtRendering
+            designSize: Theme.gearSize
         }
 
-        Text {
+        ClusterText {
             visible: root.showGearNumber && root.gearNumber > 0
             text: root.gearNumber
             color: root.accent
-            font.family: Theme.fontFamily
-            font.pixelSize: Math.round(Theme.gearSize * 0.55)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: Theme.gearSize * 0.12
+            designSize: Math.round(Theme.gearSize * 0.55)
+            // On the gear letter's baseline, from its metrics rather than a
+            // fraction of the nominal size, which every face reads differently.
+            anchors.baseline: gearText.baseline
         }
     }
 
@@ -61,36 +59,30 @@ Item {
         y: Theme.topRowY - height / 2
     }
 
-    Text {
+    ClusterText {
         id: rangeText
         text: root.rangeValue
-        color: Theme.textPrimary
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.rangeSize
+        designSize: Theme.rangeSize
         font.weight: Font.DemiBold
-        renderType: Text.QtRendering
         x: rangeIcon.x + rangeIcon.width + 12
-        y: Theme.topRowY - height / 2
+        y: Theme.topRowY - height / 2 + Theme.capDy(Theme.rangeSize)
     }
 
-    Text {
+    ClusterText {
         text: root.rangeUnit
         color: Theme.textDim
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.rangeUnitSize
+        designSize: Theme.rangeUnitSize
         x: rangeText.x + rangeText.width + 5
-        y: rangeText.y + rangeText.height - height - Theme.rangeSize * 0.16
+        anchors.baseline: rangeText.baseline
     }
 
     // ------------------------------------------------------- drive info
-    Text {
+    ClusterText {
         text: qsTr("Drive info")
         color: Theme.textSecondary
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.driveInfoSize
-        renderType: Text.QtRendering
+        designSize: Theme.driveInfoSize
         x: Theme.centreX - width / 2
-        y: Theme.driveInfoY - height / 2
+        y: Theme.driveInfoY - height / 2 + Theme.capDy(Theme.driveInfoSize)
     }
 
     Repeater {
@@ -103,34 +95,32 @@ Item {
             required property var modelData
             readonly property real cy: Theme.infoRowY[modelData.row]
 
-            Text {
+            ClusterText {
                 text: modelData.label
                 color: Theme.textSecondary
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.infoLabelSize
+                designSize: Theme.infoLabelSize
                 x: Theme.infoLabelX
-                y: parent.cy - height / 2
+                y: parent.cy - height / 2 + Theme.capDy(Theme.infoLabelSize)
             }
 
-            Text {
+            ClusterText {
                 id: value
                 text: modelData.value
-                color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.infoValueSize
-                renderType: Text.QtRendering
+                designSize: Theme.infoValueSize
+                // Right-aligned into the gap the label leaves, and shrunk
+                // rather than allowed to grow back over it.
+                fitWidth: Theme.infoValueRight - Theme.infoLabelX - 92
+                horizontalAlignment: Text.AlignRight
                 x: Theme.infoValueRight - width
-                y: parent.cy - height / 2
+                y: parent.cy - height / 2 + Theme.capDy(Theme.infoValueSize)
             }
 
-            Text {
+            ClusterText {
                 text: modelData.unit
                 color: Theme.textDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.infoUnitSize
+                designSize: Theme.infoUnitSize
                 x: Theme.infoUnitX
-                // Align with the value's baseline.
-                y: value.y + value.height - height - Theme.infoValueSize * 0.14
+                anchors.baseline: value.baseline
             }
         }
     }
@@ -141,12 +131,11 @@ Item {
     }
 
     // Transient driver message.
-    Text {
+    ClusterText {
         visible: root.message !== ""
         text: root.message
         color: "#F5A623"
-        font.family: Theme.fontFamily
-        font.pixelSize: 22
+        designSize: 22
         x: Theme.centreX - width / 2
         y: 615
     }

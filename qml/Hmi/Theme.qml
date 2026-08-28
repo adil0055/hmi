@@ -25,6 +25,55 @@ QtObject {
 
     function icon(name) { return assetPath + "/icons/" + name + ".svg" }
 
+    // ------------------------------------------------- typeface adaptation
+    /*!
+        Proportions of the face currently in use, pushed in by Main.qml from
+        FontManager.  Defaults describe the reference face, so the cluster is
+        laid out correctly before the first update arrives.
+
+        Every size below is a *design* size, quoted against the reference face.
+        Text is set at \l px() of that and positioned with \l capDy(), which
+        together keep the artwork put when the typeface changes underneath it.
+    */
+    property var fontMetrics: ({
+        capScale: 1.0, capCentre: 0.517, lineRatio: 1.521, digitRatio: 0.560,
+        digitScale: 1.0, refCapCentre: 0.517, refLineRatio: 1.521
+    })
+
+    /*!
+        Pixel size at which \a designSize draws capitals the reference height.
+
+        Nominal pixel size is a poor description of how big type looks: the two
+        faces in the catalogue furthest apart put 0.63 and 0.73 of the em into
+        their capitals, a 17% difference in apparent size at the same setting.
+    */
+    function px(designSize) {
+        return Math.max(1, Math.round(designSize * fontMetrics.capScale))
+    }
+
+    /*!
+        Vertical nudge that holds a vertically-centred run of glyphs in place.
+
+        Qt centres a Text on its line box, which is ascent plus descent — and
+        those swing from 0.79 to 1.14 of the em across the catalogue, largely
+        because of how much room a face reserves for accents it may never draw.
+        Centring on the box therefore moves the *visible* glyphs around as the
+        face changes.  Adding this to a `y: centre - height / 2` puts the middle
+        of the capital band back where the reference face had it, so use it
+        anywhere the artwork centres text on a coordinate.
+    */
+    function capDy(designSize) {
+        var m = fontMetrics
+        var hRef = m.refLineRatio * designSize
+        var hNow = m.lineRatio * designSize * m.capScale
+        return hRef * (m.refCapCentre - 0.5) - hNow * (m.capCentre - 0.5)
+    }
+
+    /*! Roughly how wide \a count figures run at \a designSize, before layout. */
+    function digitsWide(count, designSize) {
+        return count * designSize * fontMetrics.capScale * fontMetrics.digitRatio
+    }
+
     // --------------------------------------------------------------- palette
     readonly property color black: "#000000"
     readonly property color screenBg: "#03050A"

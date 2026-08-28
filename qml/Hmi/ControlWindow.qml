@@ -196,8 +196,122 @@ Window {
                 }
             }
 
+            // -------------------------------------------------- cluster skin
+            SectionBox { title: qsTr("Cluster design") }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Repeater {
+                    model: [
+                        { id: "classic", label: qsTr("Classic dials") },
+                        { id: "bmw", label: qsTr("BMW chevrons") }
+                    ]
+                    delegate: Chip {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        text: modelData.label
+                        on: root.vehicle ? root.vehicle.skin === modelData.id : false
+                        onClicked: if (root.vehicle) root.vehicle.skin = modelData.id
+                    }
+                }
+            }
+
             // ------------------------------------------------------ typeface
             SectionBox { title: qsTr("Typeface") }
+
+            /*!
+                Every face in assets/fonts/catalog.json, each row set in itself
+                so the list shows what it is offering rather than describing it.
+            */
+            ComboBox {
+                id: fontPicker
+                objectName: "fontPicker"
+                Layout.fillWidth: true
+                model: Fonts.catalog
+                textRole: "name"
+                // -1 while a font loaded from disk is in use, which shows as
+                // the placeholder rather than as a wrong row.
+                currentIndex: Fonts.selectedIndex
+                onActivated: function (index) { Fonts.selectIndex(index) }
+
+                background: Rectangle {
+                    radius: 6
+                    color: fontPicker.hovered ? "#2C353F" : "#232B33"
+                    border.width: 1
+                    border.color: fontPicker.activeFocus ? root.accentColor : root.panelLine
+                }
+
+                contentItem: Text {
+                    leftPadding: 10
+                    rightPadding: 28
+                    text: Fonts.isCustom ? qsTr("Loaded from disk — %1").arg(Fonts.family)
+                                         : Fonts.family
+                    // Set in the cluster's own face, so the closed box is a
+                    // preview too.
+                    font.family: Fonts.isCustom ? Theme.uiFontFamily : Theme.fontFamily
+                    font.pixelSize: 15
+                    color: root.valueColor
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+
+                delegate: ItemDelegate {
+                    id: option
+                    required property int index
+                    required property var modelData
+                    width: fontPicker.width
+                    highlighted: fontPicker.highlightedIndex === index
+
+                    background: Rectangle {
+                        color: option.highlighted ? "#2C353F"
+                             : (index === Fonts.selectedIndex ? "#232B33" : "transparent")
+                    }
+
+                    contentItem: ColumnLayout {
+                        spacing: 1
+                        Text {
+                            Layout.fillWidth: true
+                            text: option.modelData.name + "   0123 km/h"
+                            font.family: option.modelData.family
+                            font.pixelSize: 17
+                            color: root.valueColor
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: option.modelData.style + " · " + option.modelData.note
+                            font.family: Theme.uiFontFamily
+                            font.pixelSize: 10
+                            color: root.labelColor
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                popup: Popup {
+                    y: fontPicker.height + 2
+                    width: fontPicker.width
+                    // Tall enough to browse, short enough to stay on screen.
+                    implicitHeight: Math.min(contentItem.implicitHeight + 2, 420)
+                    padding: 1
+
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: contentHeight
+                        model: fontPicker.popup.visible ? fontPicker.delegateModel : null
+                        currentIndex: fontPicker.highlightedIndex
+                        ScrollIndicator.vertical: ScrollIndicator {}
+                    }
+
+                    background: Rectangle {
+                        radius: 6
+                        color: "#1B2128"
+                        border.width: 1
+                        border.color: root.panelLine
+                    }
+                }
+            }
 
             FileDialog {
                 id: fontDialog
@@ -307,10 +421,12 @@ Window {
 
             Text {
                 Layout.fillWidth: true
-                text: qsTr("Select a family's regular, italic and bold files together — the "
-                           + "cluster uses italic numerals and a demi-bold range. The choice "
-                           + "is remembered next time. The panel keeps its own font so it "
-                           + "stays readable.")
+                text: qsTr("Pick a bundled face above, or load your own — select a family's "
+                           + "regular, italic and bold files together, since the cluster uses "
+                           + "italic numerals and a demi-bold range. Either way the artwork "
+                           + "re-measures the face and re-aligns itself around it, so sizes "
+                           + "and baselines hold. The choice is remembered next time, and the "
+                           + "panel keeps its own font so it stays readable.")
                 color: root.labelColor
                 font.family: Theme.uiFontFamily
                 font.pixelSize: 10
@@ -443,6 +559,29 @@ Window {
                 opacity: enabled ? 1 : 0.4
                 value: root.vehicle ? root.vehicle.rpm : 0
                 onMoved: function (v) { if (root.vehicle) root.vehicle.rpm = v }
+            }
+
+            // Drives the BMW skin's right-hand band. In Simulate the physics
+            // owns it — it follows the throttle and goes negative on the
+            // brakes — so it is only settable by hand in Manual.
+            Slider2 {
+                label: qsTr("ePower")
+                from: -1
+                to: 1
+                decimals: 2
+                enabled: root.vehicle ? root.vehicle.simulationMode === "manual" : false
+                opacity: enabled ? 1 : 0.4
+                value: root.vehicle ? root.vehicle.ePower : 0
+                onMoved: function (v) { if (root.vehicle) root.vehicle.ePower = v }
+            }
+
+            Slider2 {
+                label: qsTr("Charge")
+                from: 0
+                to: 1
+                suffix: ""
+                value: root.vehicle ? root.vehicle.batteryLevel : 0
+                onMoved: function (v) { if (root.vehicle) root.vehicle.batteryLevel = v }
             }
 
             RowLayout {

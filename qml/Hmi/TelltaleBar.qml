@@ -14,6 +14,17 @@ Item {
 
     property var vehicle: null
 
+    // Geometry is a parameter rather than a constant so the BMW cluster can
+    // reuse the lamp table below at its own size and position.
+    property real lampSize: Theme.telltaleSize
+    property real gap: Theme.telltaleGap
+    property real rowWidth: Theme.telltaleRowWidth
+    property real centreX: Theme.centreX
+    property real rowY: Theme.telltaleY
+    property real turnLeftX: Theme.turnLeftX
+    property real turnRightX: Theme.turnRightX
+    property real turnSize: Theme.turnSize
+
     anchors.fill: parent
 
     readonly property var lamps: [
@@ -62,18 +73,17 @@ Item {
         return n
     }
     readonly property int perRow:
-        Math.max(1, Math.floor((Theme.telltaleRowWidth + Theme.telltaleGap)
-                               / (Theme.telltaleSize + Theme.telltaleGap)))
+        Math.max(1, Math.floor((root.rowWidth + root.gap) / (root.lampSize + root.gap)))
 
     Flow {
         id: strip
-        spacing: Theme.telltaleGap
+        spacing: root.gap
         // Sized to the lamps actually lit, so the group stays centred.
-        width: Math.max(Theme.telltaleSize,
+        width: Math.max(root.lampSize,
                         Math.min(root.activeCount, root.perRow)
-                        * (Theme.telltaleSize + Theme.telltaleGap) - Theme.telltaleGap)
-        x: Theme.centreX - width / 2
-        y: Theme.telltaleY - Theme.telltaleSize / 2
+                        * (root.lampSize + root.gap) - root.gap)
+        x: root.centreX - width / 2
+        y: root.rowY - root.lampSize / 2
 
         Repeater {
             model: root.lamps
@@ -83,16 +93,18 @@ Item {
                 active: modelData.on
                 blinking: modelData.blink
                 blinkPhase: root.vehicle ? root.vehicle.blinkOn : true
+                width: root.lampSize
+                height: root.lampSize
             }
         }
     }
 
     Telltale {
         source: Theme.icon("turn_left")
-        width: Theme.turnSize
-        height: Theme.turnSize
-        x: Theme.turnLeftX - width / 2
-        y: Theme.telltaleY - height / 2
+        width: root.turnSize
+        height: root.turnSize
+        x: root.turnLeftX - width / 2
+        y: root.rowY - height / 2
         active: root.vehicle ? (root.vehicle.turnLeft || root.vehicle.hazard) : false
         blinking: true
         blinkPhase: root.vehicle ? root.vehicle.blinkOn : true
@@ -100,10 +112,10 @@ Item {
 
     Telltale {
         source: Theme.icon("turn_right")
-        width: Theme.turnSize
-        height: Theme.turnSize
-        x: Theme.turnRightX - width / 2
-        y: Theme.telltaleY - height / 2
+        width: root.turnSize
+        height: root.turnSize
+        x: root.turnRightX - width / 2
+        y: root.rowY - height / 2
         active: root.vehicle ? (root.vehicle.turnRight || root.vehicle.hazard) : false
         blinking: true
         blinkPhase: root.vehicle ? root.vehicle.blinkOn : true

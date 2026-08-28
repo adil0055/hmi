@@ -15,27 +15,45 @@ Window {
 
     property var vehicle: null
     property real forcedScale: 0
+    /*! Which cluster design to draw; follows the model so the panel can swap it. */
+    readonly property string skin: vehicle ? vehicle.skin : "classic"
 
-    readonly property real fitScale: Math.min(width / Theme.designW, height / Theme.designH)
+    // The two designs have different canvases — 1790x870 against 1920x720 —
+    // so the window re-proportions itself when the skin changes.
+    readonly property int canvasW: scene.item ? scene.item.designW : Theme.designW
+    readonly property int canvasH: scene.item ? scene.item.designH : Theme.designH
+
+    readonly property real fitScale: Math.min(width / canvasW, height / canvasH)
     readonly property real renderScale: forcedScale > 0 ? forcedScale : fitScale
 
     title: qsTr("Instrument Cluster")
-    color: Theme.black
+    color: root.skin === "bmw" ? BmwTheme.background : Theme.black
     visible: true
 
-    width: Math.min(Theme.designW, Screen.desktopAvailableWidth - 80)
-    height: Math.round(width * Theme.designH / Theme.designW)
+    width: Math.min(canvasW, Screen.desktopAvailableWidth - 80)
+    height: Math.round(width * canvasH / canvasW)
 
     Item {
         anchors.centerIn: parent
-        width: Theme.designW
-        height: Theme.designH
+        width: root.canvasW
+        height: root.canvasH
         scale: root.renderScale
         transformOrigin: Item.Center
 
-        ClusterScene {
-            vehicle: root.vehicle
+        Loader {
+            id: scene
+            sourceComponent: root.skin === "bmw" ? bmwScene : classicScene
         }
+    }
+
+    Component {
+        id: classicScene
+        ClusterScene { vehicle: root.vehicle }
+    }
+
+    Component {
+        id: bmwScene
+        BmwScene { vehicle: root.vehicle }
     }
 
     // ------------------------------------------------------------ shortcuts

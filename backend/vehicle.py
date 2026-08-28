@@ -94,10 +94,24 @@ _SPEC: list[tuple[str, type, object]] = [
     ("laneRightDetected", bool, True),
     ("laneDeparture", str, "none"),  # none / left / right
     ("fcaWarn", bool, False),
+    # -- electric drive -----------------------------------------------------
+    # The BMW-style cluster reads as an EV: it replaces the rev counter with an
+    # ePower gauge running from full recuperation to full power, and the fuel
+    # gauge with a state of charge.
+    ("batteryLevel", float, 0.83),  # 0..1 state of charge
+    ("ePower", float, 0.0),  # -1 (max recuperation) .. 1 (max power)
+    ("chargingNow", bool, False),
+    # -- media --------------------------------------------------------------
+    ("mediaTitle", str, "Indeed"),
+    ("mediaArtist", str, "Jacob Thommsen"),
+    ("mediaElapsed", int, 74),  # seconds into the track
+    ("mediaDuration", int, 237),  # seconds
+    ("mediaPlaying", bool, True),
     # -- misc ---------------------------------------------------------------
     ("message", str, ""),  # transient text shown under Drive info
     ("simulationMode", str, "sim"),  # sim (physics) or manual (direct set)
     ("showBezel", bool, True),
+    ("skin", str, "classic"),  # which cluster design to draw: classic / bmw
 ]
 
 
