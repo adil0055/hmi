@@ -33,9 +33,12 @@ windows. To do it by hand:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 tools/fetch_fonts.py      # only needed if assets/fonts is empty
 python3 main.py
 ```
+
+The typefaces are committed, so nothing has to be downloaded first. Run
+`python3 tools/fetch_fonts.py` only after adding a family to
+`assets/fonts/catalog.json`.
 
 On Windows, `run.sh` does not apply — the virtualenv puts its interpreter
 somewhere else and Qt Quick Controls defaults to a native style that discards
@@ -44,7 +47,6 @@ the panel's styling:
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe tools\fetch_fonts.py
 $env:QT_QUICK_CONTROLS_STYLE = 'Basic'
 .\.venv\Scripts\python.exe main.py
 ```

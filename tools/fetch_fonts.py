@@ -2,8 +2,9 @@
 """Download the typefaces listed in assets/fonts/catalog.json.
 
 Every family in the catalogue is redistributable (SIL OFL 1.1 or Apache 2.0)
-and comes from the upstream google/fonts repository, so this only has to be
-run once after a clone — or again after adding a family to the catalogue.
+and comes from the upstream google/fonts repository, and the files are
+committed alongside it — so a clone needs nothing and this only has to be run
+after adding a family to the catalogue, or to repair a missing file.
 
     python3 tools/fetch_fonts.py            # fetch whatever is missing
     python3 tools/fetch_fonts.py --force    # re-download everything
