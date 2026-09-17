@@ -23,6 +23,7 @@ QtObject {
         x: Math.max(0, Screen.desktopAvailableWidth - width - 20)
         y: 40
         onOpenTextSizes: app.sizePanel.show()
+        onOpenLayoutFaults: app.layoutPanel.show()
     }
 
     /*!
@@ -81,9 +82,42 @@ QtObject {
         function onSizesChanged() { app.syncSizes() }
     }
 
+    /*!
+        The layout-fault panel, opened from the control panel.
+
+        Kept out of the way at start-up like the size panel: it exists for one
+        job — drawing the cluster deliberately wrong so that whatever is
+        watching it can be shown to notice — and that is not most sessions.
+    */
+    property LayoutWindow layoutPanel: LayoutWindow {
+        cluster: app.cluster
+        visible: appShowLayoutPanel
+        x: Math.max(0, app.panel.x - width - 12)
+        y: app.panel.y + 60
+    }
+
+    /*!
+        Push the commanded layout faults into LayoutRoles.
+
+        Assignment rather than a binding for the same reason as \l syncFonts:
+        LayoutRoles is a singleton and cannot see the `LayoutFaults` context
+        property. Every LayoutShift is a binding onto these, so commanding a
+        fault moves the element immediately.
+    */
+    function syncLayout() {
+        LayoutRoles.enabled = LayoutFaults.enabled
+        LayoutRoles.faults = LayoutFaults.faults
+    }
+
+    property Connections layoutWatch: Connections {
+        target: LayoutFaults
+        function onLayoutChanged() { app.syncLayout() }
+    }
+
     Component.onCompleted: {
         Theme.assetPath = appAssetPath
         syncFonts()
         syncSizes()
+        syncLayout()
     }
 }

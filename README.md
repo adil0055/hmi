@@ -77,6 +77,13 @@ On Fedora: `sudo dnf install mesa-libEGL mesa-libGL libxkbcommon-x11 fontconfig`
 | `--font-family ID` | start on a bundled typeface (`inter`, `teko`, `rajdhani`, …) |
 | `--text-scale N` | scale every run of text at once (0.6–1.8) |
 | `--skin NAME` | which cluster to draw: `classic` or `bmw` |
+| `--layout-panel` | also open the layout-fault panel |
+| `--layout-shift ID=dx,dy` | draw an element out of place on purpose |
+| `--layout-reset` | clear every stored layout fault before starting |
+| `--layout-export FILE` | write the commanded faults as JSON |
+| `--calibration P` | draw a test pattern instead of the cluster |
+| `--calibration-square N` | chessboard square size, in display pixels |
+| `--calibration-export FILE` | write the pattern's corner coordinates as JSON |
 
 Keys in the cluster window: **F11** full screen, **Esc** leave full screen,
 **B** show/hide the bezel.
@@ -147,6 +154,11 @@ lamp, cruise control, units — is settable at any time in either mode.
 **Size panel** — opened from **Text sizes…** in the test panel, or with
 `--size-panel`. Lists every run of text in both clusters with the size it is
 currently set at and a slider each; see [Text sizes](#text-sizes).
+
+**Layout panel** — opened from **Layout faults…** in the test panel, or with
+`--layout-panel`. Moves, resizes, turns and hides elements on command, and
+switches the cluster to a calibration pattern; see
+[Testing what watches the cluster](#testing-what-watches-the-cluster).
 
 ---
 
@@ -288,6 +300,128 @@ it would leave you no way to read the button that undoes the change.
 
 ---
 
+## Testing what watches the cluster
+
+A camera pointed at the cluster, checking that everything is where the design
+says it should be, cannot be trusted until it has been shown to report a
+displacement that was really applied. On a cluster that is already correct,
+a validator that always answered PASS would score full marks.
+
+So the cluster can draw itself **wrong**, on purpose, by an exact amount — and
+it can draw a **calibration pattern** so the camera can work out where the
+display is in the first place.
+
+### Layout faults
+
+**Layout faults…** in the test panel lists every element either cluster draws,
+with four numbers and a switch each:
+
+| | |
+| --- | --- |
+| **dx**, **dy** | move it, in design pixels |
+| **scale** | draw it too large or too small, about its own centre |
+| **rot** | turn it, in degrees |
+| **Hide** | do not draw it at all |
+
+Between them those cover what a layout check reports: wrong position, wrong
+size, wrong orientation, missing. Typed fields rather than sliders, because the
+whole value of this is that the number is *known* — a slider gives you 2.7 when
+you meant 3.
+
+Offsets are in **design pixels**, the units `Theme.qml` and `BmwTheme.qml` are
+written in, so a commanded 3 px is 3 px of the framebuffer whatever the window
+has been scaled to. The panel also shows what that comes to at the current
+render scale, which is the number a camera would be measuring.
+
+From the command line, and on a screenshot:
+
+```bash
+python3 main.py --layout-panel --layout-shift classic.dial.speed=3,1.25
+python3 main.py --layout-shift bmw.gear=0,0,1,12 bmw.media=hidden
+python3 tools/shoot.py faulty.png --layout-shift classic.gauge.fuel=-30,0 \
+    --layout-export faulty.json
+```
+
+`ID=dx,dy`, `ID=dx,dy,scale,rot` and `ID=hidden` all work. The ids are listed
+in `qml/Hmi/LayoutRoles.qml`, and `--layout-export` writes the commanded values
+as JSON — that file is the ground truth a validator's answers get scored
+against, not another opinion about where things ended up.
+
+Faults **persist between runs**, like the typeface and the text sizes. That is
+convenient and it is a trap, so it is a loud one: a run that starts on a
+displaced cluster says so on stderr, the test panel's button carries the count,
+and the layout panel says it across its header. A cluster quietly drawing three
+pixels out because somebody left it that way last week is exactly the sort of
+thing that gets diagnosed for a fortnight as a camera fault. `--layout-reset`,
+or **Reset all**, puts everything back.
+
+Measured straight off the framebuffer, a commanded shift comes back within
+0.03 px on whole pixels and 0.17 px sub-pixel.
+
+### Adding an element
+
+One row in `qml/Hmi/LayoutRoles.qml`, and the element wrapped in a
+`LayoutShift` carrying that id:
+
+```qml
+LayoutShift {
+    role: "classic.dial.speed"
+    pivotX: Theme.dialCxLeft; pivotY: Theme.dialCy
+    Dial { centreX: Theme.dialCxLeft; ... }
+}
+```
+
+The wrapper fills its parent and passes design-canvas coordinates through
+unchanged, so the element inside keeps positioning itself exactly as it did —
+wrapping one costs a line and changes nothing until a fault is commanded.
+`pivotX`/`pivotY` are the element's own centre and only matter for `scale` and
+`rot`; without them an element would grow about the middle of the canvas, which
+moves it as well as resizing it and makes the commanded number untestable.
+
+`python3 tools/layout_test.py` checks the catalogue and the artwork still
+agree in both directions — a row without a wrapper is a control in the panel
+that moves nothing, which reads as "the validator missed it".
+
+### Calibration patterns
+
+Mapping camera pixels onto display pixels is what sets the accuracy of
+everything downstream, and the most direct way to establish it is for the
+cluster to draw the pattern itself: then the correspondence is exact and known
+rather than inferred from the bezel or the artwork.
+
+| Pattern | For |
+| --- | --- |
+| `checker` | a chessboard, for `findChessboardCornersSB` and a homography |
+| `white` | finding the active area by fitting its edges; also a flat field |
+| `black` | a dark frame |
+| `grid` | eyeballing distortion and focus, with the canvas size captioned |
+| `crosshair` | five exact points, for when the chessboard will not detect |
+
+```bash
+python3 main.py --calibration checker --calibration-export board.json
+python3 tools/shoot.py board.png --calibration checker --calibration-square 120
+```
+
+`board.json` carries the board geometry and the inner-corner coordinates. It
+gives them **twice**, and which one you use matters:
+
+- `corners_pixel_centre` — pixel column *x* has its centre at *x*. This is what
+  OpenCV, NumPy and every detector mean, and it is the list to feed them.
+- `corners_qt` — the same points in Qt item coordinates, where a pixel spans
+  `[x, x+1)`.
+
+They differ by exactly half a pixel in both axes. Rendering the board and
+detecting it back agrees with `corners_pixel_centre` to 0.02 px and with
+`corners_qt` to 0.49 px — so quietly picking the wrong one puts half a pixel of
+systematic error into the homography and from there into every measurement
+taken through it.
+
+The geometry is computed once, in `backend/calibration.py`; the QML draws from
+that same result, so what is on the glass and what the rig is told cannot drift
+apart.
+
+---
+
 ## Text sizes
 
 Switching typeface changes what a size *means*. A face chosen for its numerals
@@ -369,12 +503,17 @@ backend/
   simulator.py          engine, gearbox, road load, fuel, trip computer
   fonts.py              FontManager — the catalogue, custom faces, and metrics
   sizes.py              TextSizeManager — the text scale and per-run overrides
+  layout.py             LayoutManager — deliberate layout faults, and the warning
+  calibration.py        the test patterns, and where their corners really are
 qml/
   Main.qml              the three windows
   Hmi/
     Theme.qml           classic geometry and colour, plus the font adaptation
     BmwTheme.qml        BMW geometry and colour, and the chevron polygon
     TextSizes.qml       every run of text, with the size it was drawn at
+    LayoutRoles.qml     every element a fault can be commanded on
+    LayoutShift.qml     applies one element's fault, and nothing else
+    CalibrationScene.qml  a test pattern at exact framebuffer coordinates
     Fmt.qml             unit conversion and display formatting
     ClusterText.qml     text that holds its size and place across typefaces
     ClusterWindow.qml   hosts whichever skin is selected, and scales it
@@ -393,6 +532,7 @@ qml/
     TelltaleBar.qml     the warning lamp strip, shared by both skins
     ControlWindow.qml   the test panel, including the typeface dropdown
     TextSizeWindow.qml  the size panel: every run of text, and a slider each
+    LayoutWindow.qml    the layout panel: faults, and the calibration patterns
 assets/
   fonts/
     catalog.json        the fourteen families, with licence and provenance
@@ -403,6 +543,7 @@ tools/
   make_icons.py         regenerates assets/icons
   shoot.py              headless screenshot of any cluster state
   smoke_test.py         drives the simulator and checks it behaves
+  layout_test.py        checks the fault catalogue, the artwork and the board
 ```
 
 ### Adjusting the artwork
@@ -434,6 +575,12 @@ Check the simulation still behaves:
 
 ```bash
 python3 tools/smoke_test.py
+```
+
+Check the layout-fault machinery and the calibration board:
+
+```bash
+python3 tools/layout_test.py
 ```
 
 Regenerate the telltale icons after editing `tools/make_icons.py`:

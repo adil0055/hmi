@@ -4,6 +4,7 @@ singleton Theme 1.0 Theme.qml
 singleton Fmt 1.0 Fmt.qml
 singleton BmwTheme 1.0 BmwTheme.qml
 singleton TextSizes 1.0 TextSizes.qml
+singleton LayoutRoles 1.0 LayoutRoles.qml
 
 Arc 1.0 Arc.qml
 Bezel 1.0 Bezel.qml
@@ -13,6 +14,7 @@ BmwMediaTile 1.0 BmwMediaTile.qml
 BmwScene 1.0 BmwScene.qml
 BmwStatusBar 1.0 BmwStatusBar.qml
 BottomBar 1.0 BottomBar.qml
+CalibrationScene 1.0 CalibrationScene.qml
 CenterPanel 1.0 CenterPanel.qml
 ClusterScene 1.0 ClusterScene.qml
 ClusterText 1.0 ClusterText.qml
@@ -21,6 +23,8 @@ ControlWindow 1.0 ControlWindow.qml
 Dial 1.0 Dial.qml
 EcoBar 1.0 EcoBar.qml
 LaneGraphic 1.0 LaneGraphic.qml
+LayoutShift 1.0 LayoutShift.qml
+LayoutWindow 1.0 LayoutWindow.qml
 MiniArcGauge 1.0 MiniArcGauge.qml
 Needle 1.0 Needle.qml
 Telltale 1.0 Telltale.qml

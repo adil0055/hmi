@@ -21,6 +21,7 @@ Window {
 
     /*! Raised when the text-size panel is asked for; Main.qml owns the window. */
     signal openTextSizes()
+    signal openLayoutFaults()
 
     title: qsTr("HMI Test Panel")
     width: 470
@@ -465,6 +466,29 @@ Window {
                     enabled: Sizes.modified
                     opacity: enabled ? 1 : 0.45
                     onClicked: Sizes.resetAll()
+                }
+            }
+
+            // Deliberate layout faults, for testing whatever is watching the
+            // cluster.  Flagged in place rather than buried in the panel: a
+            // cluster left drawing crooked invalidates every measurement taken
+            // off it until somebody notices.
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Action {
+                    Layout.fillWidth: true
+                    text: LayoutFaults.faultCount > 0 && LayoutFaults.enabled
+                          ? qsTr("Layout faults (%1) …").arg(LayoutFaults.faultCount)
+                          : qsTr("Layout faults…")
+                    onClicked: root.openLayoutFaults()
+                }
+                Action {
+                    Layout.fillWidth: true
+                    text: qsTr("Reset layout")
+                    enabled: LayoutFaults.modified
+                    opacity: enabled ? 1 : 0.45
+                    onClicked: LayoutFaults.resetAll()
                 }
             }
 

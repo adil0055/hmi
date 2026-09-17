@@ -167,212 +167,252 @@ Item {
     }
 
     // -------------------------------------------------------------- gauges
-    BmwGauge {
-        id: speedGauge
-        mirrored: false
-        minValue: 0
-        maxValue: BmwTheme.speedMax
-        majorStep: 30
-        minorStep: 10
-        caption: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
-        accent: root.accentLeft
-        reveal: root.reveal
-        value: root.intro ? BmwTheme.speedMax * root.introT
-                          : (root.vehicle ? root.vehicle.speed : 0)
-        Behavior on accent { ColorAnimation { duration: 420 } }
+    LayoutShift {
+        role: "bmw.gauge.speed"
+        pivotX: BmwTheme.leftApexX / 2; pivotY: BmwTheme.designH / 2
+        BmwGauge {
+            id: speedGauge
+            mirrored: false
+            minValue: 0
+            maxValue: BmwTheme.speedMax
+            majorStep: 30
+            minorStep: 10
+            caption: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
+            accent: root.accentLeft
+            reveal: root.reveal
+            value: root.intro ? BmwTheme.speedMax * root.introT
+                              : (root.vehicle ? root.vehicle.speed : 0)
+            Behavior on accent { ColorAnimation { duration: 420 } }
+        }
     }
 
-    BmwGauge {
-        id: powerGauge
-        mirrored: true
-        minValue: 0
-        maxValue: BmwTheme.powerMax
-        majorStep: 25
-        minorStep: 12.5
-        caption: qsTr("ePower %")
-        // Recuperation gets the cool colour whatever the mode, because it is a
-        // different thing happening, not a different amount of the same thing.
-        accent: root.recuperating ? "#3FD9A0" : root.accentRight
-        reveal: root.reveal
-        value: root.intro
-               ? BmwTheme.powerMax * root.introT
-               : BmwTheme.powerMax * Math.abs(root.power)
-        Behavior on accent { ColorAnimation { duration: 420 } }
+    LayoutShift {
+        role: "bmw.gauge.power"
+        pivotX: (BmwTheme.rightApexX + BmwTheme.designW) / 2; pivotY: BmwTheme.designH / 2
+        BmwGauge {
+            id: powerGauge
+            mirrored: true
+            minValue: 0
+            maxValue: BmwTheme.powerMax
+            majorStep: 25
+            minorStep: 12.5
+            caption: qsTr("ePower %")
+            // Recuperation gets the cool colour whatever the mode, because it is a
+            // different thing happening, not a different amount of the same thing.
+            accent: root.recuperating ? "#3FD9A0" : root.accentRight
+            reveal: root.reveal
+            value: root.intro
+                   ? BmwTheme.powerMax * root.introT
+                   : BmwTheme.powerMax * Math.abs(root.power)
+            Behavior on accent { ColorAnimation { duration: 420 } }
 
-        // Near the stop the band breathes, the way a rev counter nags near
-        // the redline.
-        SequentialAnimation on opacity {
-            running: !root.intro && Math.abs(root.power) > 0.88
-            loops: Animation.Infinite
-            onStopped: powerGauge.opacity = 1
-            NumberAnimation { to: 0.55; duration: 320; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1.0; duration: 320; easing.type: Easing.InOutSine }
+            // Near the stop the band breathes, the way a rev counter nags near
+            // the redline.
+            SequentialAnimation on opacity {
+                running: !root.intro && Math.abs(root.power) > 0.88
+                loops: Animation.Infinite
+                onStopped: powerGauge.opacity = 1
+                NumberAnimation { to: 0.55; duration: 320; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: 320; easing.type: Easing.InOutSine }
+            }
         }
     }
 
     // ------------------------------------------------------- speed readout
-    ClusterText {
-        id: speedText
-        text: root.vehicle
-              ? String(Fmt.speedValue(root.intro ? BmwTheme.speedMax * root.introT
-                                                 : root.shownSpeed, root.vehicle.units))
-              : "0"
-        designSize: BmwTheme.speedSize
-        color: BmwTheme.textPrimary
-        opacity: root.reveal
-        fitWidth: 250
-        horizontalAlignment: Text.AlignHCenter
-        x: BmwTheme.speedX - width / 2
-        y: BmwTheme.speedY - height / 2 + Theme.capDy(BmwTheme.speedSize)
+    LayoutShift {
+        role: "bmw.speed.value"
+        pivotX: BmwTheme.speedX; pivotY: BmwTheme.speedY
+        ClusterText {
+            id: speedText
+            text: root.vehicle
+                  ? String(Fmt.speedValue(root.intro ? BmwTheme.speedMax * root.introT
+                                                     : root.shownSpeed, root.vehicle.units))
+                  : "0"
+            designSize: BmwTheme.speedSize
+            color: BmwTheme.textPrimary
+            opacity: root.reveal
+            fitWidth: 250
+            horizontalAlignment: Text.AlignHCenter
+            x: BmwTheme.speedX - width / 2
+            y: BmwTheme.speedY - height / 2 + Theme.capDy(BmwTheme.speedSize)
+        }
     }
 
-    ClusterText {
-        text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
-        designSize: BmwTheme.speedUnitSize
-        color: BmwTheme.textDim
-        opacity: root.reveal
-        x: BmwTheme.speedX - width / 2
-        y: BmwTheme.speedY + 78 + Theme.capDy(BmwTheme.speedUnitSize)
+    LayoutShift {
+        role: "bmw.speed.unit"
+        pivotX: BmwTheme.speedX; pivotY: BmwTheme.speedY + 78
+        ClusterText {
+            text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
+            designSize: BmwTheme.speedUnitSize
+            color: BmwTheme.textDim
+            opacity: root.reveal
+            x: BmwTheme.speedX - width / 2
+            y: BmwTheme.speedY + 78 + Theme.capDy(BmwTheme.speedUnitSize)
+        }
     }
 
     // ---------------------------------------------------------------- gear
-    Item {
-        id: gearBox
-        x: BmwTheme.gearX
-        y: BmwTheme.gearY
-        opacity: root.reveal
+    LayoutShift {
+        role: "bmw.gear"
+        pivotX: BmwTheme.gearX; pivotY: BmwTheme.gearY
+        Item {
+            id: gearBox
+            x: BmwTheme.gearX
+            y: BmwTheme.gearY
+            opacity: root.reveal
 
-        ClusterText {
-            id: gearText
-            text: root.vehicle ? root.vehicle.gearMode : "P"
-            designSize: BmwTheme.gearSize
-            color: BmwTheme.textPrimary
-            x: -width / 2
-            y: -height / 2 + Theme.capDy(BmwTheme.gearSize)
+            ClusterText {
+                id: gearText
+                text: root.vehicle ? root.vehicle.gearMode : "P"
+                designSize: BmwTheme.gearSize
+                color: BmwTheme.textPrimary
+                x: -width / 2
+                y: -height / 2 + Theme.capDy(BmwTheme.gearSize)
 
-            // Lift and settle on a change of selection, so the letter reads as
-            // having been *selected* rather than simply having been replaced.
-            onTextChanged: gearPop.restart()
-            SequentialAnimation {
-                id: gearPop
-                NumberAnimation {
-                    target: gearBox; property: "scale"
-                    to: 1.22; duration: 130; easing.type: Easing.OutQuad
-                }
-                NumberAnimation {
-                    target: gearBox; property: "scale"
-                    to: 1.0; duration: 260; easing.type: Easing.OutBack
+                // Lift and settle on a change of selection, so the letter reads as
+                // having been *selected* rather than simply having been replaced.
+                onTextChanged: gearPop.restart()
+                SequentialAnimation {
+                    id: gearPop
+                    NumberAnimation {
+                        target: gearBox; property: "scale"
+                        to: 1.22; duration: 130; easing.type: Easing.OutQuad
+                    }
+                    NumberAnimation {
+                        target: gearBox; property: "scale"
+                        to: 1.0; duration: 260; easing.type: Easing.OutBack
+                    }
                 }
             }
-        }
 
-        // The ratio in use, tucked under the letter when the box is in D.
-        ClusterText {
-            visible: root.vehicle
-                     ? (root.vehicle.gearMode === "D" && root.vehicle.gearNumber > 0)
-                     : false
-            text: root.vehicle ? String(root.vehicle.gearNumber) : ""
-            designSize: BmwTheme.gearNumberSize
-            color: root.accentRight
-            x: -width / 2
-            y: 62 + Theme.capDy(BmwTheme.gearNumberSize)
-            Behavior on color { ColorAnimation { duration: 420 } }
+            // The ratio in use, tucked under the letter when the box is in D.
+            ClusterText {
+                visible: root.vehicle
+                         ? (root.vehicle.gearMode === "D" && root.vehicle.gearNumber > 0)
+                         : false
+                text: root.vehicle ? String(root.vehicle.gearNumber) : ""
+                designSize: BmwTheme.gearNumberSize
+                color: root.accentRight
+                x: -width / 2
+                y: 62 + Theme.capDy(BmwTheme.gearNumberSize)
+                Behavior on color { ColorAnimation { duration: 420 } }
+            }
         }
     }
 
     // -------------------------------------------------------- centre stack
-    BmwMediaTile {
-        // Stands aside for a driver message rather than being covered by one.
-        opacity: root.reveal * (root.vehicle && root.vehicle.message !== "" ? 0 : 1)
-        Behavior on opacity { NumberAnimation { duration: 220 } }
-        accent: root.accentLeft
-        title: root.vehicle ? root.vehicle.mediaTitle : ""
-        artist: root.vehicle ? root.vehicle.mediaArtist : ""
-        elapsed: root.vehicle ? root.vehicle.mediaElapsed : 0
-        duration: root.vehicle ? root.vehicle.mediaDuration : 0
-        playing: root.vehicle ? root.vehicle.mediaPlaying : false
-        Behavior on accent { ColorAnimation { duration: 420 } }
+    LayoutShift {
+        role: "bmw.media"
+        pivotX: BmwTheme.centreX; pivotY: BmwTheme.artY + BmwTheme.artSize / 2
+        BmwMediaTile {
+            // Stands aside for a driver message rather than being covered by one.
+            opacity: root.reveal * (root.vehicle && root.vehicle.message !== "" ? 0 : 1)
+            Behavior on opacity { NumberAnimation { duration: 220 } }
+            accent: root.accentLeft
+            title: root.vehicle ? root.vehicle.mediaTitle : ""
+            artist: root.vehicle ? root.vehicle.mediaArtist : ""
+            elapsed: root.vehicle ? root.vehicle.mediaElapsed : 0
+            duration: root.vehicle ? root.vehicle.mediaDuration : 0
+            playing: root.vehicle ? root.vehicle.mediaPlaying : false
+            Behavior on accent { ColorAnimation { duration: 420 } }
+        }
     }
 
     // A driver message displaces the cover art rather than sitting over it.
-    Rectangle {
-        visible: root.vehicle ? root.vehicle.message !== "" : false
-        x: BmwTheme.centreX - width / 2
-        y: BmwTheme.artY + BmwTheme.artSize / 2 - height / 2
-        width: message.width + 44
-        height: message.height + 26
-        radius: 6
-        color: Qt.rgba(0, 0, 0, 0.82)
-        border.width: 1
-        border.color: Qt.rgba(0.96, 0.65, 0.14, 0.55)
-        opacity: root.reveal
+    LayoutShift {
+        role: "bmw.message"
+        pivotX: BmwTheme.centreX; pivotY: BmwTheme.artY + BmwTheme.artSize / 2
+        Rectangle {
+            visible: root.vehicle ? root.vehicle.message !== "" : false
+            x: BmwTheme.centreX - width / 2
+            y: BmwTheme.artY + BmwTheme.artSize / 2 - height / 2
+            width: message.width + 44
+            height: message.height + 26
+            radius: 6
+            color: Qt.rgba(0, 0, 0, 0.82)
+            border.width: 1
+            border.color: Qt.rgba(0.96, 0.65, 0.14, 0.55)
+            opacity: root.reveal
 
-        ClusterText {
-            id: message
-            anchors.centerIn: parent
-            text: root.vehicle ? root.vehicle.message : ""
-            designSize: BmwTheme.messageSize
-            color: "#F5A623"
+            ClusterText {
+                id: message
+                anchors.centerIn: parent
+                text: root.vehicle ? root.vehicle.message : ""
+                designSize: BmwTheme.messageSize
+                color: "#F5A623"
+            }
         }
     }
 
     // ---------------------------------------------------------- status bar
-    BmwStatusBar {
-        opacity: root.reveal
-        accent: root.accentLeft
-        driveMode: root.mode
-        batteryLevel: root.vehicle ? root.vehicle.batteryLevel : 0
-        charging: root.vehicle ? root.vehicle.chargingNow : false
-        clock: Qt.formatTime(new Date(), "HH:mm")
-        tempText: root.vehicle
-                  ? (root.vehicle.outsideTemp > 0 ? "+" : "")
-                    + Fmt.tempValue(root.vehicle.outsideTemp, root.vehicle.units).toFixed(1)
-                  : "0.0"
-        tempUnit: root.vehicle ? Fmt.tempUnit(root.vehicle.units) : "°C"
-        rangeText: root.vehicle
-                   ? String(Math.round(Fmt.isImperial(root.vehicle.units)
-                                       ? root.vehicle.rangeKm * Fmt.kmToMi
-                                       : root.vehicle.rangeKm))
-                   : "0"
-        rangeUnit: root.vehicle ? Fmt.distanceUnit(root.vehicle.units) : "km"
-        Behavior on accent { ColorAnimation { duration: 420 } }
+    LayoutShift {
+        role: "bmw.statusbar"
+        pivotX: BmwTheme.centreX; pivotY: BmwTheme.statusY
+        BmwStatusBar {
+            opacity: root.reveal
+            accent: root.accentLeft
+            driveMode: root.mode
+            batteryLevel: root.vehicle ? root.vehicle.batteryLevel : 0
+            charging: root.vehicle ? root.vehicle.chargingNow : false
+            clock: Qt.formatTime(new Date(), "HH:mm")
+            tempText: root.vehicle
+                      ? (root.vehicle.outsideTemp > 0 ? "+" : "")
+                        + Fmt.tempValue(root.vehicle.outsideTemp, root.vehicle.units).toFixed(1)
+                      : "0.0"
+            tempUnit: root.vehicle ? Fmt.tempUnit(root.vehicle.units) : "°C"
+            rangeText: root.vehicle
+                       ? String(Math.round(Fmt.isImperial(root.vehicle.units)
+                                           ? root.vehicle.rangeKm * Fmt.kmToMi
+                                           : root.vehicle.rangeKm))
+                       : "0"
+            rangeUnit: root.vehicle ? Fmt.distanceUnit(root.vehicle.units) : "km"
+            Behavior on accent { ColorAnimation { duration: 420 } }
+        }
     }
 
     // ----------------------------------------------------------- telltales
-    TelltaleBar {
-        vehicle: root.vehicle
-        opacity: root.reveal
-        lampSize: BmwTheme.telltaleSize
-        gap: BmwTheme.telltaleGap
-        rowWidth: BmwTheme.telltaleRowWidth
-        centreX: BmwTheme.centreX
-        rowY: BmwTheme.telltaleY
-        turnLeftX: BmwTheme.turnLeftX
-        turnRightX: BmwTheme.turnRightX
-        turnSize: BmwTheme.turnSize
+    LayoutShift {
+        role: "bmw.telltales"
+        pivotX: BmwTheme.centreX; pivotY: BmwTheme.telltaleY
+        TelltaleBar {
+            vehicle: root.vehicle
+            opacity: root.reveal
+            lampSize: BmwTheme.telltaleSize
+            gap: BmwTheme.telltaleGap
+            rowWidth: BmwTheme.telltaleRowWidth
+            centreX: BmwTheme.centreX
+            rowY: BmwTheme.telltaleY
+            turnLeftX: BmwTheme.turnLeftX
+            turnRightX: BmwTheme.turnRightX
+            turnSize: BmwTheme.turnSize
+        }
     }
 
     // Cruise set speed, under the speed readout on the left.
-    Row {
-        visible: root.vehicle ? root.vehicle.cruiseEnabled : false
-        opacity: root.reveal
-        spacing: 7
-        x: BmwTheme.speedX - width / 2
-        y: BmwTheme.speedY + 128
+    LayoutShift {
+        role: "bmw.cruise"
+        pivotX: BmwTheme.speedX; pivotY: BmwTheme.speedY + 128
+        Row {
+            visible: root.vehicle ? root.vehicle.cruiseEnabled : false
+            opacity: root.reveal
+            spacing: 7
+            x: BmwTheme.speedX - width / 2
+            y: BmwTheme.speedY + 128
 
-        ClusterText {
-            id: cruiseValue
-            text: root.vehicle ? String(root.vehicle.cruiseSetSpeed) : "0"
-            designSize: BmwTheme.cruiseValueSize
-            color: root.vehicle && root.vehicle.cruiseActive ? "#3FD9A0" : BmwTheme.textDim
-            Behavior on color { ColorAnimation { duration: 240 } }
-        }
+            ClusterText {
+                id: cruiseValue
+                text: root.vehicle ? String(root.vehicle.cruiseSetSpeed) : "0"
+                designSize: BmwTheme.cruiseValueSize
+                color: root.vehicle && root.vehicle.cruiseActive ? "#3FD9A0" : BmwTheme.textDim
+                Behavior on color { ColorAnimation { duration: 240 } }
+            }
 
-        ClusterText {
-            text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
-            designSize: BmwTheme.cruiseUnitSize
-            color: BmwTheme.textDim
-            anchors.baseline: cruiseValue.baseline
+            ClusterText {
+                text: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
+                designSize: BmwTheme.cruiseUnitSize
+                color: BmwTheme.textDim
+                anchors.baseline: cruiseValue.baseline
+            }
         }
     }
 

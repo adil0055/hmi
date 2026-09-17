@@ -6,12 +6,15 @@ Item {
     id: harness
 
     readonly property string skin: Vehicle ? Vehicle.skin : "classic"
-    readonly property int canvasW: scene.item ? scene.item.designW : Theme.designW
-    readonly property int canvasH: scene.item ? scene.item.designH : Theme.designH
+    readonly property bool calibrating: typeof Calibration !== "undefined" && Calibration !== null
+                                      && Calibration.active === true
+    readonly property int canvasW: skin === "bmw" ? BmwTheme.designW : Theme.designW
+    readonly property int canvasH: skin === "bmw" ? BmwTheme.designH : Theme.designH
 
     Rectangle {
         anchors.fill: parent
-        color: harness.skin === "bmw" ? BmwTheme.background : Theme.black
+        color: harness.calibrating ? "black"
+                                   : (harness.skin === "bmw" ? BmwTheme.background : Theme.black)
     }
 
     Item {
@@ -23,12 +26,18 @@ Item {
 
         Loader {
             id: scene
-            sourceComponent: harness.skin === "bmw" ? bmwScene : classicScene
+            sourceComponent: harness.calibrating
+                             ? calibrationScene
+                             : (harness.skin === "bmw" ? bmwScene : classicScene)
         }
     }
 
     Component { id: classicScene; ClusterScene { vehicle: Vehicle } }
     Component { id: bmwScene; BmwScene { vehicle: Vehicle } }
+    Component {
+        id: calibrationScene
+        CalibrationScene { designW: harness.canvasW; designH: harness.canvasH }
+    }
 
     Component.onCompleted: {
         Theme.assetPath = appAssetPath
@@ -40,5 +49,9 @@ Item {
         // Text sizes likewise, so a shot matches what the app would draw.
         TextSizes.scale = Sizes.scale
         TextSizes.overrides = Sizes.overrides
+        // Layout faults likewise, so a shot shows the displacement that was
+        // commanded rather than a correct cluster.
+        LayoutRoles.enabled = LayoutFaults.enabled
+        LayoutRoles.faults = LayoutFaults.faults
     }
 }

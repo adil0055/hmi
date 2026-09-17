@@ -12,6 +12,10 @@ Options::
     --fullscreen     open the cluster full screen
     --scale N        force the cluster render scale (default: fit the screen)
     --screenshot F   render one frame to F and exit (works headless)
+    --layout-panel   open the layout-fault panel
+    --layout-shift   draw an element out of place on purpose, for testing
+    --layout-reset   put every element back before starting
+    --calibration P  draw a test pattern instead of the cluster
 """
 
 from __future__ import annotations
@@ -25,7 +29,10 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow
 
-from backend import FontManager, Simulator, TextSizeManager, VehicleState
+from backend import (CalibrationManager, FontManager, LayoutManager, Simulator,
+                     TextSizeManager, VehicleState)
+from backend.calibration import PATTERNS
+from backend.layout import parse_shift
 
 ROOT = Path(__file__).resolve().parent
 QML_DIR = ROOT / "qml"
@@ -49,6 +56,23 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
                         help="which cluster to draw (default: whichever was last used)")
     parser.add_argument("--text-scale", type=float, default=0.0, metavar="N",
                         help="scale every run of text (0.6..1.8); remembered, like the panel")
+    parser.add_argument("--layout-panel", action="store_true",
+                        help="also open the layout-fault panel")
+    parser.add_argument("--layout-shift", nargs="*", default=[], metavar="ID=dx,dy",
+                        help="draw an element out of place, in design px; also "
+                             "ID=dx,dy,scale,rot and ID=hidden "
+                             "(ids are in qml/Hmi/LayoutRoles.qml)")
+    parser.add_argument("--layout-reset", action="store_true",
+                        help="clear every stored layout fault before starting")
+    parser.add_argument("--layout-export", default="", metavar="FILE",
+                        help="write the commanded faults to FILE as JSON and carry on")
+    parser.add_argument("--calibration", default="", choices=PATTERNS, metavar="PATTERN",
+                        help="draw a test pattern instead of the cluster: "
+                             + ", ".join(p for p in PATTERNS if p))
+    parser.add_argument("--calibration-square", type=int, default=0, metavar="N",
+                        help="chessboard square size in display px")
+    parser.add_argument("--calibration-export", default="", metavar="FILE",
+                        help="write the pattern's corner coordinates to FILE as JSON")
     return parser.parse_args(argv)
 
 
@@ -78,9 +102,43 @@ def main(argv: list[str] | None = None) -> int:
     if args.text_scale:
         sizes.scale = args.text_scale
 
+    layout = LayoutManager()
+    if args.layout_reset:
+        layout.resetAll()
+    if args.layout_shift:
+        faults = {}
+        for term in args.layout_shift:
+            try:
+                role_id, entry = parse_shift(term)
+            except ValueError as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
+            faults[role_id] = entry
+        layout.setFaults(faults)
+    if args.layout_export:
+        Path(args.layout_export).write_text(layout.exportJson())
+        print(f"wrote {args.layout_export}")
+    # Loud on purpose: a cluster quietly drawing three pixels out because
+    # somebody left it that way last week is the kind of thing that gets
+    # diagnosed for a fortnight as a camera fault.
+    warning = layout.summary()
+    if warning:
+        print(warning, file=sys.stderr)
+
+    calibration = CalibrationManager()
+    if args.calibration_square:
+        calibration.squarePx = args.calibration_square
+    if args.calibration:
+        calibration.pattern = args.calibration
+
     vehicle = VehicleState()
     if args.skin:
         vehicle.skin = args.skin
+    if args.calibration_export:
+        canvas = (1920, 720) if vehicle.skin == "bmw" else (1790, 870)
+        Path(args.calibration_export).write_text(
+            calibration.exportJson(*canvas))
+        print(f"wrote {args.calibration_export}")
     simulator = Simulator(vehicle)
 
     engine = QQmlApplicationEngine()
@@ -90,9 +148,14 @@ def main(argv: list[str] | None = None) -> int:
     ctx.setContextProperty("Vehicle", vehicle)
     ctx.setContextProperty("Fonts", fonts)
     ctx.setContextProperty("Sizes", sizes)
+    # Not "Layout": QtQuick.Layouts already attaches that name, and the panel
+    # imports it.
+    ctx.setContextProperty("LayoutFaults", layout)
+    ctx.setContextProperty("Calibration", calibration)
     ctx.setContextProperty("appAssetPath", QUrl.fromLocalFile(str(ROOT / "assets")).toString())
     ctx.setContextProperty("appShowPanel", not args.no_panel)
     ctx.setContextProperty("appShowSizePanel", args.size_panel)
+    ctx.setContextProperty("appShowLayoutPanel", args.layout_panel)
     ctx.setContextProperty("appFullscreen", args.fullscreen)
     ctx.setContextProperty("appForcedScale", float(args.scale))
 

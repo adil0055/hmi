@@ -17,17 +17,21 @@ Window {
     property real forcedScale: 0
     /*! Which cluster design to draw; follows the model so the panel can swap it. */
     readonly property string skin: vehicle ? vehicle.skin : "classic"
+    /*! While a calibration pattern is up, the cluster is not drawn at all. */
+    readonly property bool calibrating: typeof Calibration !== "undefined" && Calibration !== null
+                                      && Calibration.active === true
 
     // The two designs have different canvases — 1790x870 against 1920x720 —
     // so the window re-proportions itself when the skin changes.
-    readonly property int canvasW: scene.item ? scene.item.designW : Theme.designW
-    readonly property int canvasH: scene.item ? scene.item.designH : Theme.designH
+    readonly property int canvasW: root.skin === "bmw" ? BmwTheme.designW : Theme.designW
+    readonly property int canvasH: root.skin === "bmw" ? BmwTheme.designH : Theme.designH
 
     readonly property real fitScale: Math.min(width / canvasW, height / canvasH)
     readonly property real renderScale: forcedScale > 0 ? forcedScale : fitScale
 
     title: qsTr("Instrument Cluster")
-    color: root.skin === "bmw" ? BmwTheme.background : Theme.black
+    color: root.calibrating ? "black"
+                            : (root.skin === "bmw" ? BmwTheme.background : Theme.black)
     visible: true
 
     width: Math.min(canvasW, Screen.desktopAvailableWidth - 80)
@@ -42,7 +46,9 @@ Window {
 
         Loader {
             id: scene
-            sourceComponent: root.skin === "bmw" ? bmwScene : classicScene
+            sourceComponent: root.calibrating
+                             ? calibrationScene
+                             : (root.skin === "bmw" ? bmwScene : classicScene)
         }
     }
 
@@ -54,6 +60,11 @@ Window {
     Component {
         id: bmwScene
         BmwScene { vehicle: root.vehicle }
+    }
+
+    Component {
+        id: calibrationScene
+        CalibrationScene { designW: root.canvasW; designH: root.canvasH }
     }
 
     // ------------------------------------------------------------ shortcuts
