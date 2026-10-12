@@ -1,0 +1,274 @@
+VERSION "IPC 2.0"
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	BA_DEF_DEF_
+	SIG_VALTYPE_
+
+BS_:
+
+BU_: BCM ECM ESC TCU SRS EPS ADAS TPMS VCU MMI SWM IPC
+
+
+BO_ 160 ESC_01: 8 ESC
+ SG_ ESC_01_CRC : 0|8@1+ (1,0) [0|255] "" IPC
+ SG_ ESC_01_Counter : 8|4@1+ (1,0) [0|14] "" IPC
+ SG_ ESC_VehicleSpeed : 16|16@1+ (0.01,0) [0|655.35] "km/h" IPC
+ SG_ ESC_ABS_TtReq : 32|2@1+ (1,0) [0|3] "" IPC
+ SG_ ESC_ESC_TtReq : 34|2@1+ (1,0) [0|3] "" IPC
+ SG_ ESC_ESCOff_TtReq : 36|2@1+ (1,0) [0|3] "" IPC
+ SG_ ESC_TCSOff_TtReq : 38|2@1+ (1,0) [0|3] "" IPC
+ SG_ ESC_BrakeWarn_TtReq : 40|2@1+ (1,0) [0|3] "" IPC
+ SG_ ESC_EPB_Sts : 42|2@1+ (1,0) [0|3] "" IPC
+
+BO_ 176 ECM_01: 8 ECM
+ SG_ ECM_01_CRC : 0|8@1+ (1,0) [0|255] "" IPC
+ SG_ ECM_01_Counter : 8|4@1+ (1,0) [0|14] "" IPC
+ SG_ ECM_EngineSpeed : 16|16@1+ (0.25,0) [0|16383.75] "rpm" IPC
+ SG_ ECM_EngineRunning : 32|1@1+ (1,0) [0|1] "" IPC
+ SG_ ECM_MIL_TtReq : 34|2@1+ (1,0) [0|3] "" IPC
+ SG_ ECM_OilPress_TtReq : 36|2@1+ (1,0) [0|3] "" IPC
+ SG_ ECM_Charge_TtReq : 38|2@1+ (1,0) [0|3] "" IPC
+ SG_ ECM_GlowPlug_TtReq : 40|2@1+ (1,0) [0|3] "" IPC
+ SG_ ECM_CoolantWarn_TtReq : 42|2@1+ (1,0) [0|3] "" IPC
+ SG_ ECM_ShiftUp_Req : 44|1@1+ (1,0) [0|1] "" IPC
+
+BO_ 192 TCU_01: 8 TCU
+ SG_ TCU_01_CRC : 0|8@1+ (1,0) [0|255] "" IPC
+ SG_ TCU_01_Counter : 8|4@1+ (1,0) [0|14] "" IPC
+ SG_ TCU_GearSel : 16|4@1+ (1,0) [0|15] "" IPC
+ SG_ TCU_GearActual : 20|4@1+ (1,0) [0|15] "" IPC
+ SG_ TCU_DriveMode : 24|3@1+ (1,0) [0|7] "" IPC
+ SG_ TCU_DriverMsg : 28|4@1+ (1,0) [0|15] "" IPC
+
+BO_ 800 SRS_01: 8 SRS
+ SG_ SRS_01_CRC : 0|8@1+ (1,0) [0|255] "" IPC
+ SG_ SRS_01_Counter : 8|4@1+ (1,0) [0|14] "" IPC
+ SG_ SRS_Airbag_TtReq : 16|2@1+ (1,0) [0|3] "" IPC
+ SG_ SRS_BuckleDriver : 18|2@1+ (1,0) [0|3] "" IPC
+ SG_ SRS_BucklePass : 20|2@1+ (1,0) [0|3] "" IPC
+ SG_ SRS_PassOccupied : 22|1@1+ (1,0) [0|1] "" IPC
+
+BO_ 816 EPS_01: 8 EPS
+ SG_ EPS_01_CRC : 0|8@1+ (1,0) [0|255] "" IPC
+ SG_ EPS_01_Counter : 8|4@1+ (1,0) [0|14] "" IPC
+ SG_ EPS_Warn_TtReq : 16|2@1+ (1,0) [0|3] "" IPC
+
+BO_ 832 ADAS_01: 8 ADAS
+ SG_ ADAS_CC_Sts : 0|3@1+ (1,0) [0|7] "" IPC
+ SG_ ADAS_CC_SetSpeed : 8|8@1+ (1,0) [0|255] "km/h" IPC
+ SG_ ADAS_LDW_Sts : 16|3@1+ (1,0) [0|7] "" IPC
+ SG_ ADAS_LaneLeft : 19|1@1+ (1,0) [0|1] "" IPC
+ SG_ ADAS_LaneRight : 20|1@1+ (1,0) [0|1] "" IPC
+ SG_ ADAS_FCW_TtReq : 21|2@1+ (1,0) [0|3] "" IPC
+
+BO_ 848 TPMS_01: 4 TPMS
+ SG_ TPMS_Warn_TtReq : 0|2@1+ (1,0) [0|3] "" IPC
+
+BO_ 912 BCM_01: 8 BCM
+ SG_ BCM_01_CRC : 0|8@1+ (1,0) [0|255] "" IPC
+ SG_ BCM_01_Counter : 8|4@1+ (1,0) [0|14] "" IPC
+ SG_ BCM_KL15 : 16|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_Immo_TtReq : 18|2@1+ (1,0) [0|3] "" IPC
+
+BO_ 913 BCM_02: 8 BCM
+ SG_ BCM_HeadlampSts : 0|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_HighBeam_TtReq : 2|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_FrontFog_TtReq : 4|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_RearFog_TtReq : 6|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_TurnLeft_Ind : 8|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_TurnRight_Ind : 10|2@1+ (1,0) [0|3] "" IPC
+ SG_ BCM_AutoHighBeam : 12|1@1+ (1,0) [0|1] "" IPC
+
+BO_ 914 BCM_03: 8 BCM
+ SG_ BCM_DoorFL : 0|1@1+ (1,0) [0|1] "" IPC
+ SG_ BCM_DoorFR : 1|1@1+ (1,0) [0|1] "" IPC
+ SG_ BCM_DoorRL : 2|1@1+ (1,0) [0|1] "" IPC
+ SG_ BCM_DoorRR : 3|1@1+ (1,0) [0|1] "" IPC
+ SG_ BCM_Trunk : 4|1@1+ (1,0) [0|1] "" IPC
+ SG_ BCM_Hood : 5|1@1+ (1,0) [0|1] "" IPC
+ SG_ BCM_WasherLow_TtReq : 6|2@1+ (1,0) [0|3] "" IPC
+
+BO_ 915 BCM_04: 8 BCM
+ SG_ BCM_OutsideTemp : 0|8@1+ (0.5,-40) [-40|87.5] "degC" IPC
+
+BO_ 960 ECM_02: 8 ECM
+ SG_ ECM_CoolantTemp : 0|8@1+ (1,-40) [-40|215] "degC" IPC
+ SG_ ECM_OilTemp : 8|8@1+ (1,-40) [-40|215] "degC" IPC
+ SG_ ECM_FuelLevel : 16|8@1+ (0.5,0) [0|127.5] "%" IPC
+ SG_ ECM_FuelRate : 24|16@1+ (0.01,0) [0|655.35] "l/h" IPC
+
+BO_ 928 VCU_01: 8 VCU
+ SG_ VCU_ePower : 0|8@1- (0.01,0) [-1.28|1.27] "" IPC
+ SG_ VCU_SOC : 8|8@1+ (0.5,0) [0|127.5] "%" IPC
+ SG_ VCU_Charging : 16|1@1+ (1,0) [0|1] "" IPC
+
+BO_ 944 SWM_01: 2 SWM
+ SG_ SWM_TripReset : 0|1@1+ (1,0) [0|1] "" IPC
+
+BO_ 1184 MMI_01: 8 MMI
+ SG_ MMI_Playing : 0|1@1+ (1,0) [0|1] "" IPC
+ SG_ MMI_Elapsed : 8|16@1+ (1,0) [0|65535] "s" IPC
+ SG_ MMI_Duration : 24|16@1+ (1,0) [0|65535] "s" IPC
+
+BO_ 1472 IPC_01: 8 IPC
+ SG_ IPC_01_CRC : 0|8@1+ (1,0) [0|255] "" BCM
+ SG_ IPC_01_Counter : 8|4@1+ (1,0) [0|14] "" BCM
+ SG_ IPC_DisplaySts : 16|2@1+ (1,0) [0|3] "" BCM
+ SG_ IPC_Odometer : 24|24@1+ (0.1,0) [0|1677721.5] "km" BCM
+
+
+CM_ "Instrument cluster (IPC) CAN matrix. Every message is sent cyclically at its GenMsgCycleTime. Messages carrying a _CRC and a _Counter signal are protected AUTOSAR E2E profile 1 style: the counter counts 0..14, and the CRC is CRC-8 SAE J1850 (poly 0x1D, init 0xFF, final XOR 0xFF) over the Data ID (the message ID, low byte then high byte) and data bytes 1..7. The cluster treats a message as lost after 5 cycles without a valid frame (at least 200 ms), and shows the failsafe for it: the ABS, ESC and brake lamps for ESC_01, the airbag lamp for SRS_01, the steering lamp for EPS_01, the engine lamp for ECM_01. Telltale requests (_TtReq) take Off, On, Flash (the cluster flashes the lamp at 1.3 Hz) or SNA (signal not available). BCM_KL15 is the ignition: the cluster boots on KL15 On, shows a 3 s bulb check with every lamp lit and the gauges swept, and goes dark on Off.";
+CM_ BO_ 1472 "Sent by the cluster: its display state and odometer.";
+CM_ SG_ 160 ESC_VehicleSpeed "Vehicle speed. 0xFFFF: not available, shown as ---.";
+CM_ SG_ 160 ESC_ABS_TtReq "ABS warning lamp request.";
+CM_ SG_ 160 ESC_ESC_TtReq "ESC lamp request; flashes while ESC intervenes.";
+CM_ SG_ 160 ESC_ESCOff_TtReq "ESC off lamp request.";
+CM_ SG_ 160 ESC_TCSOff_TtReq "Traction control off lamp request.";
+CM_ SG_ 160 ESC_BrakeWarn_TtReq "Brake system warning lamp request.";
+CM_ SG_ 160 ESC_EPB_Sts "Electric parking brake: Applied lights the parking brake lamp, Fault flashes it.";
+CM_ SG_ 176 ECM_EngineSpeed "Engine speed. 0xFFFF: not available.";
+CM_ SG_ 176 ECM_MIL_TtReq "Check engine lamp (MIL) request.";
+CM_ SG_ 176 ECM_OilPress_TtReq "Oil pressure warning lamp request.";
+CM_ SG_ 176 ECM_Charge_TtReq "Battery charge warning lamp request.";
+CM_ SG_ 176 ECM_GlowPlug_TtReq "Glow plug lamp request.";
+CM_ SG_ 176 ECM_CoolantWarn_TtReq "Coolant temperature warning lamp request.";
+CM_ SG_ 176 ECM_ShiftUp_Req "Shift-up indicator request.";
+CM_ SG_ 192 TCU_GearSel "Selected gear.";
+CM_ SG_ 192 TCU_GearActual "Gear engaged, shown beside D.";
+CM_ SG_ 192 TCU_DriveMode "Drive mode.";
+CM_ SG_ 192 TCU_DriverMsg "Driver message request.";
+CM_ SG_ 800 SRS_Airbag_TtReq "Airbag warning lamp request.";
+CM_ SG_ 800 SRS_BuckleDriver "Driver seat belt buckle. The cluster lights the seat belt lamp when a belt in use is unbuckled, and flashes it above 25 km/h.";
+CM_ SG_ 800 SRS_BucklePass "Passenger seat belt buckle; counts only with the seat occupied.";
+CM_ SG_ 800 SRS_PassOccupied "Passenger seat occupied.";
+CM_ SG_ 816 EPS_Warn_TtReq "Power steering warning lamp request.";
+CM_ SG_ 832 ADAS_CC_Sts "Cruise control: Ready lights the cruise ready lamp, Active the cruise lamp and the set speed.";
+CM_ SG_ 832 ADAS_CC_SetSpeed "Cruise control set speed.";
+CM_ SG_ 832 ADAS_LDW_Sts "Lane departure warning: Ready lights the lane assist lamp; a warning flashes the lane warning lamp.";
+CM_ SG_ 832 ADAS_LaneLeft "Left lane marking detected.";
+CM_ SG_ 832 ADAS_LaneRight "Right lane marking detected.";
+CM_ SG_ 832 ADAS_FCW_TtReq "Forward collision warning lamp request.";
+CM_ SG_ 848 TPMS_Warn_TtReq "Tyre pressure warning lamp request.";
+CM_ SG_ 912 BCM_KL15 "Ignition (terminal 15).";
+CM_ SG_ 912 BCM_Immo_TtReq "Immobiliser lamp request.";
+CM_ SG_ 913 BCM_HeadlampSts "Headlamps: Position lights the position lamp, LowBeam the low beam lamp.";
+CM_ SG_ 913 BCM_HighBeam_TtReq "High beam lamp request.";
+CM_ SG_ 913 BCM_FrontFog_TtReq "Front fog lamp request.";
+CM_ SG_ 913 BCM_RearFog_TtReq "Rear fog lamp request.";
+CM_ SG_ 913 BCM_TurnLeft_Ind "Left turn indicator lamp.";
+CM_ SG_ 913 BCM_TurnRight_Ind "Right turn indicator lamp.";
+CM_ SG_ 914 BCM_WasherLow_TtReq "Washer fluid low lamp request.";
+CM_ SG_ 914 BCM_DoorFL "Front left door; any door, the boot or the bonnet open lights the door lamp.";
+CM_ SG_ 915 BCM_OutsideTemp "Outside temperature.";
+CM_ SG_ 960 ECM_CoolantTemp "Coolant temperature; 118 degC and over lights the coolant warning lamp.";
+CM_ SG_ 960 ECM_FuelLevel "Fuel level; at 12% and under the cluster lights the low fuel lamp.";
+CM_ SG_ 960 ECM_FuelRate "Fuel consumption rate, for the trip computer.";
+CM_ SG_ 928 VCU_ePower "Electric drive power, recuperation negative.";
+CM_ SG_ 928 VCU_SOC "Battery state of charge.";
+CM_ SG_ 944 SWM_TripReset "Steering wheel trip reset button.";
+CM_ SG_ 1184 MMI_Elapsed "Media track position.";
+
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 65535;
+BA_DEF_ BO_ "GenMsgSendType" ENUM "Cyclic","OnEvent","IfActive";
+BA_DEF_ SG_ "GenSigStartValue" INT 0 16777215;
+BA_DEF_ BO_ "DiagRequest" ENUM "no","yes";
+BA_DEF_DEF_ "GenMsgCycleTime" 100;
+BA_DEF_DEF_ "GenMsgSendType" "Cyclic";
+BA_DEF_DEF_ "GenSigStartValue" 0;
+BA_DEF_DEF_ "DiagRequest" "no";
+
+BA_ "GenMsgCycleTime" BO_ 160 20;
+BA_ "GenMsgCycleTime" BO_ 176 20;
+BA_ "GenMsgCycleTime" BO_ 192 20;
+BA_ "GenMsgCycleTime" BO_ 800 100;
+BA_ "GenMsgCycleTime" BO_ 816 100;
+BA_ "GenMsgCycleTime" BO_ 832 100;
+BA_ "GenMsgCycleTime" BO_ 848 500;
+BA_ "GenMsgCycleTime" BO_ 912 100;
+BA_ "GenMsgCycleTime" BO_ 913 100;
+BA_ "GenMsgCycleTime" BO_ 914 100;
+BA_ "GenMsgCycleTime" BO_ 915 1000;
+BA_ "GenMsgCycleTime" BO_ 960 100;
+BA_ "GenMsgCycleTime" BO_ 928 100;
+BA_ "GenMsgCycleTime" BO_ 944 100;
+BA_ "GenMsgCycleTime" BO_ 1184 1000;
+BA_ "GenMsgCycleTime" BO_ 1472 100;
+
+BA_ "GenSigStartValue" SG_ 192 TCU_GearSel 0;
+BA_ "GenSigStartValue" SG_ 800 SRS_BuckleDriver 1;
+BA_ "GenSigStartValue" SG_ 800 SRS_BucklePass 1;
+BA_ "GenSigStartValue" SG_ 832 ADAS_CC_SetSpeed 0;
+BA_ "GenSigStartValue" SG_ 832 ADAS_LaneLeft 1;
+BA_ "GenSigStartValue" SG_ 832 ADAS_LaneRight 1;
+BA_ "GenSigStartValue" SG_ 912 BCM_KL15 2;
+BA_ "GenSigStartValue" SG_ 915 BCM_OutsideTemp 136;
+BA_ "GenSigStartValue" SG_ 960 ECM_CoolantTemp 60;
+BA_ "GenSigStartValue" SG_ 960 ECM_OilTemp 60;
+BA_ "GenSigStartValue" SG_ 960 ECM_FuelLevel 28;
+BA_ "GenSigStartValue" SG_ 928 VCU_SOC 166;
+BA_ "GenSigStartValue" SG_ 1184 MMI_Playing 1;
+BA_ "GenSigStartValue" SG_ 1184 MMI_Elapsed 74;
+BA_ "GenSigStartValue" SG_ 1184 MMI_Duration 237;
+
+VAL_ 160 ESC_VehicleSpeed 65535 "SNA" ;
+VAL_ 160 ESC_ABS_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 160 ESC_ESC_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 160 ESC_ESCOff_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 160 ESC_TCSOff_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 160 ESC_BrakeWarn_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 160 ESC_EPB_Sts 0 "Released" 1 "Applied" 2 "Fault" 3 "SNA" ;
+VAL_ 176 ECM_EngineSpeed 65535 "SNA" ;
+VAL_ 176 ECM_EngineRunning 0 "Stopped" 1 "Running" ;
+VAL_ 176 ECM_MIL_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 176 ECM_OilPress_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 176 ECM_Charge_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 176 ECM_GlowPlug_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 176 ECM_CoolantWarn_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 176 ECM_ShiftUp_Req 0 "Off" 1 "On" ;
+VAL_ 192 TCU_GearSel 0 "P" 1 "R" 2 "N" 3 "D" 15 "SNA" ;
+VAL_ 192 TCU_DriveMode 0 "Comfort" 1 "Eco" 2 "Sport" 3 "Smart" 7 "SNA" ;
+VAL_ 192 TCU_DriverMsg 0 "None" 1 "PressBrake" 2 "VehicleMoving" 3 "SelectPN" 4 "OutOfFuel" ;
+VAL_ 800 SRS_Airbag_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 800 SRS_BuckleDriver 0 "Unbuckled" 1 "Buckled" 2 "Fault" 3 "SNA" ;
+VAL_ 800 SRS_BucklePass 0 "Unbuckled" 1 "Buckled" 2 "Fault" 3 "SNA" ;
+VAL_ 800 SRS_PassOccupied 0 "Empty" 1 "Occupied" ;
+VAL_ 816 EPS_Warn_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 832 ADAS_CC_Sts 0 "Off" 1 "Ready" 2 "Active" 3 "Fault" 7 "SNA" ;
+VAL_ 832 ADAS_CC_SetSpeed 255 "SNA" ;
+VAL_ 832 ADAS_LDW_Sts 0 "Off" 1 "Ready" 2 "WarnLeft" 3 "WarnRight" 7 "SNA" ;
+VAL_ 832 ADAS_LaneLeft 0 "NotDetected" 1 "Detected" ;
+VAL_ 832 ADAS_LaneRight 0 "NotDetected" 1 "Detected" ;
+VAL_ 832 ADAS_FCW_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 848 TPMS_Warn_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 912 BCM_KL15 0 "Off" 1 "Acc" 2 "On" 3 "Start" ;
+VAL_ 912 BCM_Immo_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 913 BCM_HeadlampSts 0 "Off" 1 "Position" 2 "LowBeam" 3 "Auto" ;
+VAL_ 913 BCM_HighBeam_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 913 BCM_FrontFog_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 913 BCM_RearFog_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 913 BCM_TurnLeft_Ind 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 913 BCM_TurnRight_Ind 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 913 BCM_AutoHighBeam 0 "Off" 1 "On" ;
+VAL_ 914 BCM_DoorFL 0 "Closed" 1 "Open" ;
+VAL_ 914 BCM_DoorFR 0 "Closed" 1 "Open" ;
+VAL_ 914 BCM_DoorRL 0 "Closed" 1 "Open" ;
+VAL_ 914 BCM_DoorRR 0 "Closed" 1 "Open" ;
+VAL_ 914 BCM_Trunk 0 "Closed" 1 "Open" ;
+VAL_ 914 BCM_Hood 0 "Closed" 1 "Open" ;
+VAL_ 914 BCM_WasherLow_TtReq 0 "Off" 1 "On" 2 "Flash" 3 "SNA" ;
+VAL_ 915 BCM_OutsideTemp 255 "SNA" ;
+VAL_ 960 ECM_CoolantTemp 255 "SNA" ;
+VAL_ 960 ECM_OilTemp 255 "SNA" ;
+VAL_ 960 ECM_FuelLevel 255 "SNA" ;
+VAL_ 928 VCU_SOC 255 "SNA" ;
+VAL_ 928 VCU_Charging 0 "Off" 1 "On" ;
+VAL_ 944 SWM_TripReset 0 "Released" 1 "Pressed" ;
+VAL_ 1184 MMI_Playing 0 "Paused" 1 "Playing" ;
+VAL_ 1472 IPC_DisplaySts 0 "Off" 1 "Boot" 2 "BulbCheck" 3 "Run" ;
+

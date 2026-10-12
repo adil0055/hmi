@@ -63,9 +63,6 @@ class Simulator(QObject):
         self._blink_accum = 0.0
         self._instant_lph = 0.0
         self._engine_has_run = False
-        #: Something outside drives every value (see backend.canbus): the model
-        #: and the trip computer stand still, and only the blink keeps time.
-        self.external = False
 
         # Integrate against the wall clock rather than assuming every timeout
         # lands exactly TICK_MS apart; a loaded machine drops frames, and a
@@ -90,6 +87,16 @@ class Simulator(QObject):
     # ----------------------------------------------------------------- blink
     def _toggle_blink(self) -> None:
         v = self.v
+        if not v.canMode:
+            # Driven directly, without the cluster ECU: these flash as the
+            # ECU would have them flash.
+            flashing = [icon for icon, on in (
+                ("seatbelt", not v.beltDriver or not v.beltPassenger),
+                ("fca", v.fcaWarn), ("esc", v.escActive), ("immobilizer", v.immobilizer),
+                ("lane_warn", v.laneDeparture != "none"),
+                ("turn_left", v.turnLeft or v.hazard), ("turn_right", v.turnRight or v.hazard),
+            ) if on]
+            v.flashing = "," + ",".join(flashing) + "," if flashing else ""
         if self._anything_blinks():
             v.blinkOn = not v.blinkOn
         elif v.blinkOn:
@@ -117,9 +124,6 @@ class Simulator(QObject):
     def _tick(self) -> None:
         dt = min(MAX_STEP, max(0.001, self._clock.restart() / 1000.0))
         v = self.v
-
-        if self.external:
-            return
 
         if v.engineRunning:
             self._engine_has_run = True
@@ -303,6 +307,7 @@ class Simulator(QObject):
         v = self.v
         if not v.engineRunning:
             self._instant_lph = 0.0
+            v.fuelRate = 0.0
             v.instantConsumption = 0.0
             return
 
@@ -315,6 +320,7 @@ class Simulator(QObject):
         elif v.driveMode == "Sport":
             lph *= 1.12
         self._instant_lph = lph
+        v.fuelRate = round(lph, 2)
 
         litres = lph * dt / 3600.0
         if litres > 0.0 and v.tankCapacity > 0.0:

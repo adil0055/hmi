@@ -16,13 +16,16 @@ Options::
     --layout-shift   draw an element out of place on purpose, for testing
     --layout-reset   put every element back before starting
     --calibration P  draw a test pattern instead of the cluster
-    --can BUS        take every signal from a CAN bus (see backend/canbus.py)
+    --can BUS        bench mode: the cluster on an external CAN bus, driven by
+                     whatever tester is on it (see backend/ecu.py)
+    --restbus BUS    the panel sends its vehicle onto an external bus
     --frame-server N serve the cluster's framebuffer on port N, for testing
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -76,10 +79,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--calibration-export", default="", metavar="FILE",
                         help="write the pattern's corner coordinates to FILE as JSON")
     parser.add_argument("--can", nargs="?", const="udp_multicast", default="", metavar="BUS",
-                        help="drive the cluster from CAN: udp_multicast (default, virtual, no "
-                             "hardware), socketcan:vcan0, pcan:PCAN_USBBUS1@500000, ...")
+                        help="bench mode: the cluster listens on this bus, as a real one on "
+                             "a tester does, and the panel does not drive it: "
+                             "udp_multicast (virtual, no hardware), socketcan:vcan0, "
+                             "pcan:PCAN_USBBUS1@500000, ...")
+    parser.add_argument("--restbus", default="", metavar="BUS",
+                        help="the panel sends the vehicle onto this bus (to drive a cluster "
+                             "elsewhere, a real one included)")
+    parser.add_argument("--direct", action="store_true",
+                        help="no CAN at all: the panel sets the display directly (the old "
+                             "way; also used when python-can is not installed)")
     parser.add_argument("--dbc", default="", metavar="FILE",
-                        help="the CAN database to decode with (default can/hmi.dbc)")
+                        help="the CAN matrix (default can/cluster.dbc)")
     parser.add_argument("--frame-server", type=int, default=-1, metavar="PORT",
                         help="serve the cluster as drawn at http://127.0.0.1:PORT/frame.png "
                              "(0 picks a free port)")
@@ -141,21 +152,63 @@ def main(argv: list[str] | None = None) -> int:
     if args.calibration:
         calibration.pattern = args.calibration
 
+    # Two models: the vehicle (the panel and the driving model, the cluster's
+    # CAN partners) and the cluster's own display, which its ECU fills from
+    # the bus and nothing else. --direct ties them into one.
+    car = VehicleState()
     vehicle = VehicleState()
     if args.skin:
-        vehicle.skin = args.skin
+        car.skin = vehicle.skin = args.skin
     if args.calibration_export:
         canvas = (1920, 720) if vehicle.skin == "bmw" else (1790, 870)
         Path(args.calibration_export).write_text(
             calibration.exportJson(*canvas))
         print(f"wrote {args.calibration_export}")
-    simulator = Simulator(vehicle)
+    simulator = Simulator(car)
+    ecu, restbuses, direct = None, [], args.direct
+    if not direct:
+        try:
+            import can  # noqa: F401
+            import cantools  # noqa: F401
+        except ImportError as exc:
+            print(f"note: no CAN ({exc}); the panel drives the display directly. "
+                  "pip install -r requirements.txt for the cluster on CAN.", file=sys.stderr)
+            direct = True
+    if direct:
+        vehicle = car
+    else:
+        from backend.bus import open_bus
+        from backend.ecu import DEFAULT_DBC, ClusterEcu
+        from backend.restbus import RestBus
+
+        dbc = args.dbc or DEFAULT_DBC
+        try:
+            if args.can:
+                cluster_bus = open_bus(args.can)
+            else:
+                import can
+                channel = f"hmi-{os.getpid()}"
+                cluster_bus = can.Bus(interface="virtual", channel=channel)
+                restbuses.append(RestBus(car, can.Bus(interface="virtual", channel=channel), dbc))
+            if args.restbus:
+                restbuses.append(RestBus(car, open_bus(args.restbus), dbc))
+            ecu = ClusterEcu(vehicle, cluster_bus, dbc, quick_boot=bool(args.screenshot))
+        except Exception as exc:              # no adapter, bad DBC
+            print(f"error: CAN: {exc}", file=sys.stderr)
+            return 2
+        # Settings of the cluster itself, not on the bus: which design it
+        # draws (its coding), the bezel, and the units chosen in its menu.
+        for prop in ("skin", "showBezel", "units", "consumptionUnits"):
+            setattr(vehicle, prop, getattr(car, prop))
+            getattr(car, prop + "Changed").connect(
+                lambda prop=prop: setattr(vehicle, prop, getattr(car, prop)))
 
     engine = QQmlApplicationEngine()
     engine.addImportPath(str(QML_DIR))
 
     ctx = engine.rootContext()
     ctx.setContextProperty("Vehicle", vehicle)
+    ctx.setContextProperty("Car", car)
     ctx.setContextProperty("Fonts", fonts)
     ctx.setContextProperty("Sizes", sizes)
     # Not "Layout": QtQuick.Layouts already attaches that name, and the panel
@@ -176,20 +229,13 @@ def main(argv: list[str] | None = None) -> int:
 
     simulator.start()
 
-    can_input = None
-    if args.can:
-        from backend.canbus import DEFAULT_DBC, CanInput
-        try:
-            can_input = CanInput(vehicle, args.can, args.dbc or DEFAULT_DBC)
-        except Exception as exc:              # no python-can, no adapter, bad DBC
-            print(f"error: CAN: {exc}", file=sys.stderr)
-            return 2
-        # The bus owns the values now: the driving model would only fight it,
-        # and its trip computer would count kilometres while a tester sweeps
-        # the speed.
-        simulator.external = True
-        vehicle.simulationMode = "manual"
-        can_input.start()
+    for rb in restbuses:
+        rb.start()
+    if ecu is not None:
+        ecu.start()
+        where = args.can or "an internal bus, driven by the panel"
+        print(f"cluster: on {where}" + (f"; panel also sends on {args.restbus}"
+                                        if args.restbus else ""), flush=True)
 
     frames = None
     if args.frame_server >= 0:
@@ -204,8 +250,10 @@ def main(argv: list[str] | None = None) -> int:
         _schedule_screenshot(app, engine, args.screenshot, args.shot_delay)
 
     status = app.exec()
-    if can_input is not None:
-        can_input.stop()
+    for rb in restbuses:
+        rb.stop(close=True)
+    if ecu is not None:
+        ecu.stop()
     if frames is not None:
         frames.stop()
     # Tear the QML down first: its bindings reference the model objects, and

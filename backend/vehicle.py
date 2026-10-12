@@ -112,6 +112,12 @@ _SPEC: list[tuple[str, type, object]] = [
     ("simulationMode", str, "sim"),  # sim (physics) or manual (direct set)
     ("showBezel", bool, True),
     ("skin", str, "classic"),  # which cluster design to draw: classic / bmw
+    # -- the cluster as an ECU (backend.ecu) -------------------------------
+    ("canMode", bool, False),  # filled from the CAN bus, not set directly
+    ("power", str, "run"),  # off / boot / check (bulb check) / run
+    ("flashing", str, ""),  # ",abs,seatbelt," -- lamps the cluster flashes now
+    ("speedValid", bool, True),  # False: the speed signal is not available
+    ("fuelRate", float, 0.0),  # l/h, what the engine sends for the trip computer
 ]
 
 

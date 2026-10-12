@@ -84,8 +84,10 @@ On Fedora: `sudo dnf install mesa-libEGL mesa-libGL libxkbcommon-x11 fontconfig`
 | `--calibration P` | draw a test pattern instead of the cluster |
 | `--calibration-square N` | chessboard square size, in display pixels |
 | `--calibration-export FILE` | write the pattern's corner coordinates as JSON |
-| `--can [BUS]` | take every signal from a CAN bus; see [Driving it over CAN](#driving-it-over-can) |
-| `--dbc FILE` | the CAN database to decode with (default `can/hmi.dbc`) |
+| `--can [BUS]` | bench mode: the cluster on an external CAN bus, driven by whatever tester is on it; see [The cluster on CAN](#the-cluster-on-can) |
+| `--restbus BUS` | the panel also sends its vehicle onto `BUS` (to drive a cluster elsewhere) |
+| `--direct` | no CAN at all: the panel sets the display directly |
+| `--dbc FILE` | the CAN matrix (default `can/cluster.dbc`) |
 | `--frame-server PORT` | serve the cluster as drawn at `http://127.0.0.1:PORT/frame.png` |
 
 Keys in the cluster window: **F11** full screen, **Esc** leave full screen,
@@ -179,8 +181,11 @@ first, then amber cautions, then blue/green status): brake, park brake, oil
 pressure, charging, coolant temperature, airbag, seatbelts, doors ajar, forward
 collision, check engine, ABS, ESC and ESC off, traction off, EPS, TPMS, low
 fuel, washer fluid, glow plug, immobiliser, lane departure, rear fog, high and
-low beam, position lights, front fog, cruise control set and ready. Unlit lamps
-take up no space, so an idle cluster shows an empty strip.
+low beam, position lights, front fog, cruise control set and ready. As on a
+production cluster, every lamp has a **fixed slot** of its own in a bank above
+the gauges, and lights or goes dark there: nothing moves when other lamps come
+on, flash or go off, and the bulb check at power-up lights the whole bank
+without touching the gear letter or the media tile.
 
 **Units** — metric or imperial throughout, and km/L, L/100km or mpg for economy.
 
@@ -423,43 +428,83 @@ The geometry is computed once, in `backend/calibration.py`; the QML draws from
 that same result, so what is on the glass and what the rig is told cannot drift
 apart.
 
-### Driving it over CAN
+### The cluster on CAN
 
-A real cluster gets its signals off the vehicle's CAN bus, and a checker that
-switches lamps on to find them needs to do it the same way. With `--can` the
-cluster listens on a bus and every signal comes from there:
+The cluster is built like a production instrument cluster (an IPC), so that
+whatever is built to test it works on a real one: **everything it shows comes
+off the CAN bus**, and the test panel is not wired to the display at all. The
+panel and the driving model are the *rest of the car*; a rest-bus simulation
+sends what the car's other ECUs would, and the cluster's own ECU reads it.
 
-```bash
-pip install -r requirements.txt           # python-can, cantools, msgpack
-python3 main.py --can                     # virtual bus, no hardware
-python3 main.py --can socketcan:vcan0     # Linux virtual CAN
-python3 main.py --can pcan:PCAN_USBBUS1@500000   # a real adapter
+```
+ test panel + driving model          python-can bus            cluster
+ (the vehicle: BCM, ECM, ESC,  --->  (virtual by default,  ---> ECU: power modes,
+  TCU, SRS, EPS, ADAS, ...)          or socketcan, pcan...)     timeouts, E2E, logic
+        backend/restbus.py                                      backend/ecu.py ---> QML
 ```
 
-The default, `udp_multicast`, is python-can's virtual bus over the network:
-any program on the same computer, or on the same network segment, that opens
-the same bus talks to the cluster, with no CAN hardware at all. Some Wi-Fi
-networks drop multicast; a cable, or one computer, always works. Any adapter
-python-can supports works by naming it: `INTERFACE[:CHANNEL][@BITRATE]`.
+```bash
+pip install -r requirements.txt               # python-can, cantools, msgpack
+python3 main.py                               # all of it, on an in-process virtual bus
+python3 main.py --can                         # bench mode: the cluster alone, on udp_multicast
+python3 main.py --can socketcan:vcan0         # ... on Linux virtual CAN
+python3 main.py --can pcan:PCAN_USBBUS1@500000    # ... on a real adapter
+python3 main.py --restbus pcan:PCAN_USBBUS1@500000  # the panel driving a real cluster
+python3 main.py --direct                      # no CAN: the panel sets the display directly
+```
 
-**`can/hmi.dbc`** is the CAN database: 9 messages, 68 signals, every lamp,
-light, door and belt, the gauges, the trip computer and the media tile. Each
-signal is named after the `VehicleState` property it sets, so adding a signal
-to the DBC is all it takes to drive it. Gear, drive mode, lane departure and
-units are value tables whose names are the strings the property holds (`"D"`,
-`"Sport"`, `"left"`). Start values are the cluster's power-up state, so a
-tester that sends the defaults changes nothing on the screen.
+By default the panel and the cluster share a private in-process bus. In
+**bench mode** (`--can`) the cluster listens on an external bus and nothing
+else drives it: it stays dark until a tester sends the ignition, exactly as a
+cluster on a bench does. `udp_multicast` is python-can's virtual bus over the
+network: any program on the same computer, or the same network segment, that
+opens it talks to the cluster with no CAN hardware. Some Wi-Fi networks drop
+multicast; a cable, or one computer, always works. Any adapter python-can
+supports works by naming it: `INTERFACE[:CHANNEL][@BITRATE]`.
 
-While the bus drives, the driving model stands still (it would otherwise
-overwrite the speed and count kilometres while a tester sweeps it). Only a
-signal whose value changed is applied, so the test panel can still move what
-the tester leaves alone.
+**`can/cluster.dbc`** is the CAN matrix, laid out the way a vehicle's is: 16
+messages and 75 signals, each message sent by the ECU that owns it (ESC, ECM,
+TCU, SRS, EPS, ADAS, TPMS, BCM, VCU, the steering-wheel module, the head
+unit), each with its cycle time (`GenMsgCycleTime`: 20 ms for speed, engine
+and gear; 100 ms for body and safety status; up to 1 s for slow values), its
+receivers, start values and value tables, and a comment on each signal. The
+cluster's own message, `IPC_01`, is in it too.
 
-**`can/teach_plan.json`** says what a checker should switch on to find and
-name everything this cluster draws: every lamp one at a time, which ones
-flash, and each gauge or readout driven through a few values. layoutval's
-CAN teach-in reads it (`layoutval go --webcam --can --teach-plan
-can/teach_plan.json`).
+How the cluster behaves, as production clusters do:
+
+- **Ignition and power modes.** `BCM_KL15` (Off / Acc / On / Start) is the
+  ignition. Off, or nothing on the bus, and the display is dark. On, the
+  cluster boots (black, then its welcome screen, 1.2 s), runs the **bulb
+  check** — every lamp lit and the needles swept, 3 s — and then shows the
+  car. KL15 off, or the bus quiet for 2 s, and it goes dark again.
+- **Cyclic messages, monitored.** A message missing for 5 of its cycles (at
+  least 200 ms) is *lost*, and the cluster shows the failsafe for it: ESC_01
+  lost lights ABS, ESC and the brake lamp and the speed reads `---`; SRS_01
+  the airbag lamp; EPS_01 the steering lamp; ECM_01 the engine lamp; TPMS_01
+  the tyre lamp; TCU_01 the gear reads `-`.
+- **End-to-end protection** (AUTOSAR E2E profile 1 style) on the safety
+  messages: byte 0 is a CRC-8 (SAE J1850) over the frame's data ID and data,
+  bits 8–11 an alive counter 0–14. A frame with a wrong CRC or a counter that
+  did not move is not used; three in a row and the message is lost.
+- **Telltale requests** are 2-bit `Off / On / Flash / SNA`; the cluster
+  flashes a lamp itself, at 1.3 Hz. A value meaning *signal not available*
+  is shown as such, not as zero.
+- **Its own logic**: low fuel from the fuel level (with hysteresis), door
+  ajar from the doors, the seat-belt reminder (steady, flashing above 25
+  km/h), the coolant warning from the temperature, and the odometer and trip
+  computer integrated from the speed and fuel rate; the trip resets from the
+  steering-wheel button, over the bus.
+- **It transmits** `IPC_01` every 100 ms: its display state (Off / Boot /
+  BulbCheck / Run) and the odometer, protected like the rest.
+
+Settings of the cluster itself — which design it draws (its coding), the
+bezel, the units chosen in its menu — are not on the bus, and the panel still
+sets them.
+
+A checker that only has the DBC can work all of this out itself (layoutval
+does: the cluster node, the ignition signal, which messages carry a counter
+and a CRC, the cycle times, the rest values), and the same checker then works
+on a real cluster with its own matrix.
 
 **`--frame-server PORT`** serves the window as drawn, at
 `/frame.png`, so a camera-based checker can be run end to end against the
@@ -471,20 +516,15 @@ echo '{"screens":[{"name":"s","x":0,"y":0,"width":2560,"height":1440,"logicalDpi
 QT_QPA_PLATFORM="offscreen:configfile=screen.json" python3 main.py --no-panel --can --frame-server 8799
 ```
 
-Two things found by switching every lamp on over CAN, and fixed:
+Found by switching every lamp on over CAN, and fixed:
 
-- **Flashing lamps never showed on their own.** The seat-belt, collision,
-  ESC, immobiliser and lane-departure lamps show only in the flash's "on"
-  half, and the flash only ran while an indicator was on. It now runs while
-  anything that flashes is lit.
-- **A flashing lamp made the strip jump.** On the flash's "off" half the lamp
-  was hidden, and a hidden lamp takes no space in the strip, so every lamp
-  after it moved a slot sideways and back every 380 ms. A lit lamp now keeps
-  its slot and only fades out.
-
-One that is a design matter rather than a bug: with most lamps lit at once
-the strip wraps into a third row, which runs over the gear letter and the
-speedometer.
+- **Flashing lamps never showed on their own.** The flash only ran while an
+  indicator was on. The cluster now flashes whatever its requests say flashes.
+- **Lamps moved.** The lamps sat in a strip that made room only for the lit
+  ones, so a lamp moved sideways whenever one before it came on or flashed,
+  and the bulb check's third row ran over the gear letter. Every lamp now has
+  a fixed slot (`TelltaleBar.qml`: a grid, `telltaleColumns` per row), as on
+  a production cluster.
 
 ---
 
@@ -570,7 +610,10 @@ backend/
   fonts.py              FontManager — the catalogue, custom faces, and metrics
   sizes.py              TextSizeManager — the text scale and per-run overrides
   layout.py             LayoutManager — deliberate layout faults, and the warning
-  canbus.py             CanInput — every signal from a CAN bus, decoded with the DBC
+  ecu.py                ClusterEcu — the cluster as an ECU: power modes, timeouts, E2E, logic
+  restbus.py            RestBus — the rest of the car on the bus, from the panel's vehicle
+  e2e.py                CRC-8 SAE J1850 and alive counters, as the matrix declares them
+  bus.py                opens a python-can bus from "INTERFACE[:CHANNEL][@BITRATE]"
   frameserver.py        the window as drawn, over HTTP, for testing
   calibration.py        the test patterns, and where their corners really are
 qml/
@@ -597,7 +640,7 @@ qml/
     BmwChevron.qml      the lit band, drawn twice so it can glow and stay crisp
     BmwMediaTile.qml    cover art, track, progress
     BmwStatusBar.qml    charge, clock, mode, temperature, range
-    TelltaleBar.qml     the warning lamp strip, shared by both skins
+    TelltaleBar.qml     the warning lamps, each in a fixed slot; shared by both skins
     ControlWindow.qml   the test panel, including the typeface dropdown
     TextSizeWindow.qml  the size panel: every run of text, and a slider each
     LayoutWindow.qml    the layout panel: faults, and the calibration patterns
@@ -606,12 +649,16 @@ assets/
     catalog.json        the fourteen families, with licence and provenance
     <Family>/           the font files themselves, plus each one's licence
   icons/                generated telltale symbols
+can/
+  cluster.dbc           the CAN matrix: messages, senders, cycle times, E2E, value tables
 tools/
   fetch_fonts.py        downloads everything in catalog.json
   make_icons.py         regenerates assets/icons
   shoot.py              headless screenshot of any cluster state
   smoke_test.py         drives the simulator and checks it behaves
   layout_test.py        checks the fault catalogue, the artwork and the board
+  can_test.py           checks the cluster as an ECU, on a virtual bus
+  telltale_test.py      checks every lamp keeps its slot, in both designs
 ```
 
 ### Adjusting the artwork
@@ -651,14 +698,16 @@ Check the layout-fault machinery and the calibration board:
 python3 tools/layout_test.py
 ```
 
-Check the CAN input: the DBC against the cluster's properties, decoding,
-and what reaches the cluster (no hardware: python-can's in-process bus):
+Check the cluster as an ECU: the matrix, E2E, the power modes and their
+timing, flashing, the cluster's own logic, IPC_01, and the failsafes for a bad
+CRC, a lost message and a quiet bus (no hardware: python-can's in-process bus):
 
 ```bash
 python3 tools/can_test.py
 ```
 
-Check a flashing lamp keeps its place in the telltale strip (renders headless):
+Check every lamp keeps its slot — alone, among others, flashing and in the bulb
+check — and that the bank covers nothing else, in both designs (renders headless):
 
 ```bash
 python3 tools/telltale_test.py

@@ -10,10 +10,8 @@ Image {
     property bool blinking: false
     property bool blinkPhase: true
 
-    // Lit, the lamp holds its place in the strip through the whole flash: only
-    // its opacity follows the phase. Hidden instead, a flashing lamp left the
-    // Flow on every off half and every lamp after it jumped a slot sideways
-    // and back, 380 ms at a time.
+    // The lamp's slot is fixed (TelltaleBar); dark or lit, flashing or steady,
+    // only what is drawn in it changes.
     visible: active
     opacity: (!blinking || blinkPhase) ? 1 : 0
     width: Theme.telltaleSize

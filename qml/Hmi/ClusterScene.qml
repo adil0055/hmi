@@ -62,7 +62,10 @@ Item {
                 highlightCentre: 132
                 accent: root.accent
                 value: root.vehicle ? Fmt.speedValue(root.vehicle.speed, "metric") : 0
-                valueText: root.vehicle ? String(Fmt.speedValue(root.vehicle.speed, root.vehicle.units)) : "0"
+                // A speed signal that is not available reads as dashes, not 0.
+                valueText: !root.vehicle ? "0"
+                           : root.vehicle.speedValid === false ? "---"
+                           : String(Fmt.speedValue(root.vehicle.speed, root.vehicle.units))
                 unitText: root.vehicle ? Fmt.speedUnit(root.vehicle.units) : "km/h"
                 valueSize: Theme.valueSize
             }

@@ -124,14 +124,15 @@ QtObject {
     readonly property real statusInset: 92
 
     // -------------------------------------------------------------- telltales
-    readonly property real telltaleY: 62
-    readonly property real telltaleSize: 40
-    readonly property real telltaleGap: 16
-    /*! Kept clear of the lamp row, which wraps within \l telltaleRowWidth. */
-    readonly property real telltaleRowWidth: 380
+    /*! The centre of the lamp bank: three rows of fixed slots above the media tile. */
+    readonly property real telltaleY: 96
+    readonly property real telltaleSize: 34
+    readonly property real telltaleGap: 12
+    readonly property real telltaleRowGap: 10
+    readonly property int telltaleColumns: 10
     readonly property real turnLeftX: 690
     readonly property real turnRightX: designW - 690
-    readonly property real turnY: 62
+    readonly property real turnY: telltaleY
     readonly property real turnSize: 38
 
     // --------------------------------------------------------------- helpers

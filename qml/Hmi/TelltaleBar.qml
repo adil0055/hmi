@@ -2,12 +2,16 @@ import QtQuick
 import Hmi
 
 /*!
-    The row of warning lamps across the top of the display, plus the two turn
+    The bank of warning lamps across the top of the display, plus the two turn
     indicators that flank it.
 
-    Only lit lamps take up space, so an idle cluster shows an empty strip —
-    exactly as it does on the reference screenshot.  Lamps are ordered by
-    severity: red stop lamps first, then amber cautions, then blue/green status.
+    Every lamp has its own fixed slot, as on a production cluster: the symbol
+    is printed at one place on the display and only lights or goes dark there.
+    Nothing moves when other lamps come on or go off, so the driver (and a
+    camera) always finds a lamp where it was. The bank is a grid of
+    \l columns per row, rows centred on \l centreX, the bank centred on
+    \l rowY; lamps are ordered by severity: red stop lamps first, then amber
+    cautions, then blue/green status.
 */
 Item {
     id: root
@@ -18,8 +22,10 @@ Item {
     // reuse the lamp table below at its own size and position.
     property real lampSize: Theme.telltaleSize
     property real gap: Theme.telltaleGap
-    property real rowWidth: Theme.telltaleRowWidth
+    property real rowGap: Theme.telltaleRowGap
+    property int columns: Theme.telltaleColumns
     property real centreX: Theme.centreX
+    /*! The vertical centre of the bank, and of the turn arrows. */
     property real rowY: Theme.telltaleY
     property real turnLeftX: Theme.turnLeftX
     property real turnRightX: Theme.turnRightX
@@ -27,75 +33,76 @@ Item {
 
     anchors.fill: parent
 
+    /*! The bulb check at start-up: every lamp lit, none flashing. */
+    readonly property bool check: vehicle ? vehicle.power === "check" : false
+    /*! Lamps the cluster is flashing now, as ",abs,seatbelt,". */
+    readonly property string flashing: vehicle ? vehicle.flashing : ""
+    function flashes(icon) { return !check && flashing.indexOf("," + icon + ",") >= 0 }
+
     readonly property var lamps: [
         // -- red: stop --------------------------------------------------
-        { icon: "brake",        on: vehicle ? vehicle.brakeSystem : false,  blink: false },
-        { icon: "park_brake",   on: vehicle ? vehicle.parkBrake : false,    blink: false },
-        { icon: "oil",          on: vehicle ? vehicle.oilPressure : false,  blink: false },
-        { icon: "battery",      on: vehicle ? vehicle.batteryCharge : false, blink: false },
-        { icon: "temp_warn",    on: vehicle ? vehicle.engineTempWarn : false, blink: false },
-        { icon: "airbag",       on: vehicle ? vehicle.airbagFault : false,  blink: false },
-        { icon: "seatbelt",     on: vehicle ? (!vehicle.beltDriver || !vehicle.beltPassenger) : false,
-                                blink: true },
-        { icon: "door_open",    on: vehicle ? vehicle.doorAjar : false,     blink: false },
-        { icon: "fca",          on: vehicle ? vehicle.fcaWarn : false,      blink: true },
+        { icon: "brake",        on: check || (vehicle ? vehicle.brakeSystem : false) },
+        { icon: "park_brake",   on: check || (vehicle ? vehicle.parkBrake : false) },
+        { icon: "oil",          on: check || (vehicle ? vehicle.oilPressure : false) },
+        { icon: "battery",      on: check || (vehicle ? vehicle.batteryCharge : false) },
+        { icon: "temp_warn",    on: check || (vehicle ? vehicle.engineTempWarn : false) },
+        { icon: "airbag",       on: check || (vehicle ? vehicle.airbagFault : false) },
+        { icon: "seatbelt",     on: check || (vehicle ? (!vehicle.beltDriver || !vehicle.beltPassenger) : false) },
+        { icon: "door_open",    on: check || (vehicle ? vehicle.doorAjar : false) },
+        { icon: "fca",          on: check || (vehicle ? vehicle.fcaWarn : false) },
         // -- amber: caution ---------------------------------------------
-        { icon: "check_engine", on: vehicle ? vehicle.checkEngine : false,  blink: false },
-        { icon: "abs",          on: vehicle ? vehicle.absFault : false,     blink: false },
-        { icon: "esc",          on: vehicle ? vehicle.escActive : false,    blink: true },
-        { icon: "esc_off",      on: vehicle ? vehicle.escOff : false,       blink: false },
-        { icon: "traction_off", on: vehicle ? vehicle.tractionOff : false,  blink: false },
-        { icon: "eps",          on: vehicle ? vehicle.epsFault : false,     blink: false },
-        { icon: "tpms",         on: vehicle ? vehicle.tpms : false,         blink: false },
-        { icon: "low_fuel",     on: vehicle ? vehicle.lowFuel : false,      blink: false },
-        { icon: "washer",       on: vehicle ? vehicle.washerFluid : false,  blink: false },
-        { icon: "glow_plug",    on: vehicle ? vehicle.glowPlug : false,     blink: false },
-        { icon: "immobilizer",  on: vehicle ? vehicle.immobilizer : false,  blink: true },
-        { icon: "lane_warn",    on: vehicle ? vehicle.laneDeparture !== "none" : false, blink: true },
-        { icon: "fog_rear",     on: vehicle ? vehicle.rearFog : false,      blink: false },
+        { icon: "check_engine", on: check || (vehicle ? vehicle.checkEngine : false) },
+        { icon: "abs",          on: check || (vehicle ? vehicle.absFault : false) },
+        { icon: "esc",          on: check || (vehicle ? vehicle.escActive : false) },
+        { icon: "esc_off",      on: check || (vehicle ? vehicle.escOff : false) },
+        { icon: "traction_off", on: check || (vehicle ? vehicle.tractionOff : false) },
+        { icon: "eps",          on: check || (vehicle ? vehicle.epsFault : false) },
+        { icon: "tpms",         on: check || (vehicle ? vehicle.tpms : false) },
+        { icon: "low_fuel",     on: check || (vehicle ? vehicle.lowFuel : false) },
+        { icon: "washer",       on: check || (vehicle ? vehicle.washerFluid : false) },
+        { icon: "glow_plug",    on: check || (vehicle ? vehicle.glowPlug : false) },
+        { icon: "immobilizer",  on: check || (vehicle ? vehicle.immobilizer : false) },
+        { icon: "lane_warn",    on: check || (vehicle ? vehicle.laneDeparture !== "none" : false) },
+        { icon: "fog_rear",     on: check || (vehicle ? vehicle.rearFog : false) },
         // -- blue / green: status ---------------------------------------
-        { icon: "high_beam",    on: vehicle ? vehicle.highBeam : false,     blink: false },
-        { icon: "low_beam",     on: vehicle ? vehicle.headlightMode === 2 : false, blink: false },
-        { icon: "position_light", on: vehicle ? vehicle.headlightMode === 1 : false, blink: false },
-        { icon: "fog_front",    on: vehicle ? vehicle.frontFog : false,     blink: false },
-        { icon: "cruise",       on: vehicle ? vehicle.cruiseActive : false, blink: false },
-        { icon: "cruise_ready", on: vehicle ? (vehicle.cruiseEnabled && !vehicle.cruiseActive) : false,
-                                blink: false },
-        { icon: "lane_departure", on: vehicle ? (vehicle.ldwEnabled && vehicle.laneDeparture === "none") : false,
-                                blink: false }
+        { icon: "high_beam",    on: check || (vehicle ? vehicle.highBeam : false) },
+        { icon: "low_beam",     on: check || (vehicle ? vehicle.headlightMode === 2 : false) },
+        { icon: "position_light", on: check || (vehicle ? vehicle.headlightMode === 1 : false) },
+        { icon: "fog_front",    on: check || (vehicle ? vehicle.frontFog : false) },
+        { icon: "cruise",       on: check || (vehicle ? vehicle.cruiseActive : false) },
+        { icon: "cruise_ready", on: check || (vehicle ? (vehicle.cruiseEnabled && !vehicle.cruiseActive) : false) },
+        { icon: "lane_departure", on: check || (vehicle ? (vehicle.ldwEnabled && vehicle.laneDeparture === "none") : false) }
     ]
 
-    readonly property int activeCount: {
-        var n = 0
-        for (var i = 0; i < lamps.length; ++i)
-            if (lamps[i].on)
-                n++
-        return n
+    readonly property int rows: Math.ceil(lamps.length / Math.max(1, columns))
+    readonly property real bankHeight: rows * lampSize + (rows - 1) * rowGap
+
+    /*! The top-left corner of lamp \a index's slot, from its index alone. */
+    function slotX(index) {
+        var cols = Math.max(1, root.columns)
+        var row = Math.floor(index / cols)
+        var inRow = Math.min(cols, root.lamps.length - row * cols)
+        var width = inRow * root.lampSize + (inRow - 1) * root.gap
+        return root.centreX - width / 2 + (index % cols) * (root.lampSize + root.gap)
     }
-    readonly property int perRow:
-        Math.max(1, Math.floor((root.rowWidth + root.gap) / (root.lampSize + root.gap)))
+    function slotY(index) {
+        var row = Math.floor(index / Math.max(1, root.columns))
+        return root.rowY - root.bankHeight / 2 + row * (root.lampSize + root.rowGap)
+    }
 
-    Flow {
-        id: strip
-        spacing: root.gap
-        // Sized to the lamps actually lit, so the group stays centred.
-        width: Math.max(root.lampSize,
-                        Math.min(root.activeCount, root.perRow)
-                        * (root.lampSize + root.gap) - root.gap)
-        x: root.centreX - width / 2
-        y: root.rowY - root.lampSize / 2
-
-        Repeater {
-            model: root.lamps
-            delegate: Telltale {
-                required property var modelData
-                source: Theme.icon(modelData.icon)
-                active: modelData.on
-                blinking: modelData.blink
-                blinkPhase: root.vehicle ? root.vehicle.blinkOn : true
-                width: root.lampSize
-                height: root.lampSize
-            }
+    Repeater {
+        model: root.lamps
+        delegate: Telltale {
+            required property var modelData
+            required property int index
+            source: Theme.icon(modelData.icon)
+            active: modelData.on
+            blinking: root.flashes(modelData.icon)
+            blinkPhase: root.vehicle ? root.vehicle.blinkOn : true
+            width: root.lampSize
+            height: root.lampSize
+            x: root.slotX(index)
+            y: root.slotY(index)
         }
     }
 
@@ -105,8 +112,8 @@ Item {
         height: root.turnSize
         x: root.turnLeftX - width / 2
         y: root.rowY - height / 2
-        active: root.vehicle ? (root.vehicle.turnLeft || root.vehicle.hazard) : false
-        blinking: true
+        active: root.check || (root.vehicle ? (root.vehicle.turnLeft || root.vehicle.hazard) : false)
+        blinking: root.flashes("turn_left")
         blinkPhase: root.vehicle ? root.vehicle.blinkOn : true
     }
 
@@ -116,8 +123,8 @@ Item {
         height: root.turnSize
         x: root.turnRightX - width / 2
         y: root.rowY - height / 2
-        active: root.vehicle ? (root.vehicle.turnRight || root.vehicle.hazard) : false
-        blinking: true
+        active: root.check || (root.vehicle ? (root.vehicle.turnRight || root.vehicle.hazard) : false)
+        blinking: root.flashes("turn_right")
         blinkPhase: root.vehicle ? root.vehicle.blinkOn : true
     }
 }

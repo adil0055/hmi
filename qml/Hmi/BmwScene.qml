@@ -224,10 +224,10 @@ Item {
         pivotX: BmwTheme.speedX; pivotY: BmwTheme.speedY
         ClusterText {
             id: speedText
-            text: root.vehicle
-                  ? String(Fmt.speedValue(root.intro ? BmwTheme.speedMax * root.introT
+            text: !root.vehicle ? "0"
+                  : (!root.intro && root.vehicle.speedValid === false) ? "---"
+                  : String(Fmt.speedValue(root.intro ? BmwTheme.speedMax * root.introT
                                                      : root.shownSpeed, root.vehicle.units))
-                  : "0"
             designSize: BmwTheme.speedSize
             color: BmwTheme.textPrimary
             opacity: root.reveal
@@ -379,7 +379,8 @@ Item {
             opacity: root.reveal
             lampSize: BmwTheme.telltaleSize
             gap: BmwTheme.telltaleGap
-            rowWidth: BmwTheme.telltaleRowWidth
+            rowGap: BmwTheme.telltaleRowGap
+            columns: BmwTheme.telltaleColumns
             centreX: BmwTheme.centreX
             rowY: BmwTheme.telltaleY
             turnLeftX: BmwTheme.turnLeftX

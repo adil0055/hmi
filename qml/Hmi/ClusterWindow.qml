@@ -50,6 +50,55 @@ Window {
                              ? calibrationScene
                              : (root.skin === "bmw" ? bmwScene : classicScene)
         }
+
+        // The display itself, switched off or booting: the panel goes dark
+        // inside its glass (the hood round it is moulding, and stays), and
+        // while it boots it shows the welcome screen. Driven by the cluster
+        // ECU's power state, which follows the ignition on the bus.
+        Rectangle {
+            id: dark
+            readonly property bool framed: root.skin !== "bmw"
+            visible: !root.calibrating && root.vehicle !== null
+                     && (root.vehicle.power === "off" || root.vehicle.power === "boot")
+            x: framed ? Theme.glassRect.x : 0
+            y: framed ? Theme.glassRect.y : 0
+            width: framed ? Theme.glassRect.width : root.canvasW
+            height: framed ? Theme.glassRect.height : root.canvasH
+            radius: framed ? Theme.glassRadius : 0
+            color: "black"
+            antialiasing: true
+
+            Column {
+                anchors.centerIn: parent
+                spacing: 14
+                visible: root.vehicle !== null && root.vehicle.power === "boot"
+                opacity: visible ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 400 } }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 120; height: 120; radius: 60
+                    color: "transparent"
+                    border.color: Theme.accent
+                    border.width: 6
+                    Text {
+                        anchors.centerIn: parent
+                        text: "HMI"
+                        color: Theme.accentBright
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 40
+                        font.weight: Font.DemiBold
+                    }
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("Welcome")
+                    color: "#C9D6DF"
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 30
+                }
+            }
+        }
     }
 
     Component {

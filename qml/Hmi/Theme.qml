@@ -200,11 +200,12 @@ QtObject {
     readonly property real bottomUnitSize: TextSizes.size("classic.bottom.unit")
 
     // ------------------------------------------------------------- telltales
+    /*! The centre of the lamp bank: two rows of fixed slots between the turn arrows. */
     readonly property real telltaleY: 118
-    readonly property real telltaleSize: 46
-    readonly property real telltaleGap: 14
-    /*! Lamps wrap inside this width so they never reach the turn arrows. */
-    readonly property real telltaleRowWidth: 680
+    readonly property real telltaleSize: 38
+    readonly property real telltaleGap: 10
+    readonly property real telltaleRowGap: 12
+    readonly property int telltaleColumns: 15
     readonly property real turnLeftX: 500
     readonly property real turnRightX: 1290
     readonly property real turnSize: 42

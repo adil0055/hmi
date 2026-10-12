@@ -17,7 +17,9 @@ QtObject {
     }
 
     property ControlWindow panel: ControlWindow {
-        vehicle: Vehicle
+        // The panel is the vehicle: on CAN it reaches the cluster only through
+        // the bus, as the car's own ECUs would.
+        vehicle: Car
         visible: appShowPanel
         // Sit beside the cluster when there is room for both.
         x: Math.max(0, Screen.desktopAvailableWidth - width - 20)
