@@ -31,7 +31,7 @@ import threading
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QTimer, Signal, Slot
+from PySide6.QtCore import QObject, QTimer, Slot
 
 from .e2e import Protection
 from .vehicle import VehicleState
@@ -107,8 +107,6 @@ class _Message:
 class ClusterEcu(QObject):
     """Receives the matrix on ``bus``, fills ``vehicle``, sends IPC_01."""
 
-    _frame = Signal(int, bytes, float)
-
     def __init__(self, vehicle: VehicleState, bus, dbc: str | Path = DEFAULT_DBC,
                  node: str = "IPC", quick_boot: bool = False,
                  parent: QObject | None = None) -> None:
@@ -142,7 +140,6 @@ class ClusterEcu(QObject):
         self.frames = 0
         self.e2e_errors = 0
         self._stop = threading.Event()
-        self._frame.connect(self._on_frame)
         self._reader = threading.Thread(target=self._read, name="cluster-rx", daemon=True)
         self._task = QTimer(self)
         self._task.setInterval(TASK_MS)
@@ -176,10 +173,17 @@ class ClusterEcu(QObject):
                 continue
             if msg is None or msg.is_error_frame or msg.is_remote_frame:
                 continue
-            self._frame.emit(msg.arbitration_id, bytes(msg.data), time.monotonic())
+            self._receive(msg.arbitration_id, bytes(msg.data), time.monotonic())
 
-    @Slot(int, bytes, float)
-    def _on_frame(self, frame_id: int, data: bytes, at: float) -> None:
+    def _receive(self, frame_id: int, data: bytes, at: float) -> None:
+        """One frame, checked and decoded as it arrives, on the reader thread.
+
+        As an ECU's communication stack does on reception, not later on the
+        display's thread: a frame queued behind a long redraw there reached
+        the timeout check late, and the 20 ms messages read as lost -- the
+        ABS, ESC and brake lamps flickered on under load. Each field below is
+        assigned whole, so the cluster's task reads a consistent one.
+        """
         self._last_frame = at
         rx = self.rx.get(frame_id)
         if rx is None:
