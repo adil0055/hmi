@@ -84,6 +84,9 @@ On Fedora: `sudo dnf install mesa-libEGL mesa-libGL libxkbcommon-x11 fontconfig`
 | `--calibration P` | draw a test pattern instead of the cluster |
 | `--calibration-square N` | chessboard square size, in display pixels |
 | `--calibration-export FILE` | write the pattern's corner coordinates as JSON |
+| `--can [BUS]` | take every signal from a CAN bus; see [Driving it over CAN](#driving-it-over-can) |
+| `--dbc FILE` | the CAN database to decode with (default `can/hmi.dbc`) |
+| `--frame-server PORT` | serve the cluster as drawn at `http://127.0.0.1:PORT/frame.png` |
 
 Keys in the cluster window: **F11** full screen, **Esc** leave full screen,
 **B** show/hide the bezel.
@@ -420,6 +423,69 @@ The geometry is computed once, in `backend/calibration.py`; the QML draws from
 that same result, so what is on the glass and what the rig is told cannot drift
 apart.
 
+### Driving it over CAN
+
+A real cluster gets its signals off the vehicle's CAN bus, and a checker that
+switches lamps on to find them needs to do it the same way. With `--can` the
+cluster listens on a bus and every signal comes from there:
+
+```bash
+pip install -r requirements.txt           # python-can, cantools, msgpack
+python3 main.py --can                     # virtual bus, no hardware
+python3 main.py --can socketcan:vcan0     # Linux virtual CAN
+python3 main.py --can pcan:PCAN_USBBUS1@500000   # a real adapter
+```
+
+The default, `udp_multicast`, is python-can's virtual bus over the network:
+any program on the same computer, or on the same network segment, that opens
+the same bus talks to the cluster, with no CAN hardware at all. Some Wi-Fi
+networks drop multicast; a cable, or one computer, always works. Any adapter
+python-can supports works by naming it: `INTERFACE[:CHANNEL][@BITRATE]`.
+
+**`can/hmi.dbc`** is the CAN database: 9 messages, 68 signals, every lamp,
+light, door and belt, the gauges, the trip computer and the media tile. Each
+signal is named after the `VehicleState` property it sets, so adding a signal
+to the DBC is all it takes to drive it. Gear, drive mode, lane departure and
+units are value tables whose names are the strings the property holds (`"D"`,
+`"Sport"`, `"left"`). Start values are the cluster's power-up state, so a
+tester that sends the defaults changes nothing on the screen.
+
+While the bus drives, the driving model stands still (it would otherwise
+overwrite the speed and count kilometres while a tester sweeps it). Only a
+signal whose value changed is applied, so the test panel can still move what
+the tester leaves alone.
+
+**`can/teach_plan.json`** says what a checker should switch on to find and
+name everything this cluster draws: every lamp one at a time, which ones
+flash, and each gauge or readout driven through a few values. layoutval's
+CAN teach-in reads it (`layoutval go --webcam --can --teach-plan
+can/teach_plan.json`).
+
+**`--frame-server PORT`** serves the window as drawn, at
+`/frame.png`, so a camera-based checker can be run end to end against the
+framebuffer itself with no camera. On a machine with no display, give Qt a
+screen as large as the cluster, or the window is scaled down to fit:
+
+```bash
+echo '{"screens":[{"name":"s","x":0,"y":0,"width":2560,"height":1440,"logicalDpi":96,"logicalBaseDpi":96,"dpr":1}]}' > screen.json
+QT_QPA_PLATFORM="offscreen:configfile=screen.json" python3 main.py --no-panel --can --frame-server 8799
+```
+
+Two things found by switching every lamp on over CAN, and fixed:
+
+- **Flashing lamps never showed on their own.** The seat-belt, collision,
+  ESC, immobiliser and lane-departure lamps show only in the flash's "on"
+  half, and the flash only ran while an indicator was on. It now runs while
+  anything that flashes is lit.
+- **A flashing lamp made the strip jump.** On the flash's "off" half the lamp
+  was hidden, and a hidden lamp takes no space in the strip, so every lamp
+  after it moved a slot sideways and back every 380 ms. A lit lamp now keeps
+  its slot and only fades out.
+
+One that is a design matter rather than a bug: with most lamps lit at once
+the strip wraps into a third row, which runs over the gear letter and the
+speedometer.
+
 ---
 
 ## Text sizes
@@ -504,6 +570,8 @@ backend/
   fonts.py              FontManager — the catalogue, custom faces, and metrics
   sizes.py              TextSizeManager — the text scale and per-run overrides
   layout.py             LayoutManager — deliberate layout faults, and the warning
+  canbus.py             CanInput — every signal from a CAN bus, decoded with the DBC
+  frameserver.py        the window as drawn, over HTTP, for testing
   calibration.py        the test patterns, and where their corners really are
 qml/
   Main.qml              the three windows
@@ -581,6 +649,19 @@ Check the layout-fault machinery and the calibration board:
 
 ```bash
 python3 tools/layout_test.py
+```
+
+Check the CAN input: the DBC against the cluster's properties, decoding,
+and what reaches the cluster (no hardware: python-can's in-process bus):
+
+```bash
+python3 tools/can_test.py
+```
+
+Check a flashing lamp keeps its place in the telltale strip (renders headless):
+
+```bash
+python3 tools/telltale_test.py
 ```
 
 Regenerate the telltale icons after editing `tools/make_icons.py`:

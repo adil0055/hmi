@@ -16,6 +16,8 @@ Options::
     --layout-shift   draw an element out of place on purpose, for testing
     --layout-reset   put every element back before starting
     --calibration P  draw a test pattern instead of the cluster
+    --can BUS        take every signal from a CAN bus (see backend/canbus.py)
+    --frame-server N serve the cluster's framebuffer on port N, for testing
 """
 
 from __future__ import annotations
@@ -73,6 +75,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
                         help="chessboard square size in display px")
     parser.add_argument("--calibration-export", default="", metavar="FILE",
                         help="write the pattern's corner coordinates to FILE as JSON")
+    parser.add_argument("--can", nargs="?", const="udp_multicast", default="", metavar="BUS",
+                        help="drive the cluster from CAN: udp_multicast (default, virtual, no "
+                             "hardware), socketcan:vcan0, pcan:PCAN_USBBUS1@500000, ...")
+    parser.add_argument("--dbc", default="", metavar="FILE",
+                        help="the CAN database to decode with (default can/hmi.dbc)")
+    parser.add_argument("--frame-server", type=int, default=-1, metavar="PORT",
+                        help="serve the cluster as drawn at http://127.0.0.1:PORT/frame.png "
+                             "(0 picks a free port)")
     return parser.parse_args(argv)
 
 
@@ -166,10 +176,38 @@ def main(argv: list[str] | None = None) -> int:
 
     simulator.start()
 
+    can_input = None
+    if args.can:
+        from backend.canbus import DEFAULT_DBC, CanInput
+        try:
+            can_input = CanInput(vehicle, args.can, args.dbc or DEFAULT_DBC)
+        except Exception as exc:              # no python-can, no adapter, bad DBC
+            print(f"error: CAN: {exc}", file=sys.stderr)
+            return 2
+        # The bus owns the values now: the driving model would only fight it,
+        # and its trip computer would count kilometres while a tester sweeps
+        # the speed.
+        simulator.external = True
+        vehicle.simulationMode = "manual"
+        can_input.start()
+
+    frames = None
+    if args.frame_server >= 0:
+        from backend.frameserver import FrameServer
+        root = engine.rootObjects()[0]
+        frames = FrameServer(
+            lambda: root.findChild(QQuickWindow, "clusterWindow") or root.property("cluster"),
+            port=args.frame_server)
+        frames.start()
+
     if args.screenshot:
         _schedule_screenshot(app, engine, args.screenshot, args.shot_delay)
 
     status = app.exec()
+    if can_input is not None:
+        can_input.stop()
+    if frames is not None:
+        frames.stop()
     # Tear the QML down first: its bindings reference the model objects, and
     # evaluating them after those are gone logs spurious errors on exit.
     del engine

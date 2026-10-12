@@ -63,6 +63,9 @@ class Simulator(QObject):
         self._blink_accum = 0.0
         self._instant_lph = 0.0
         self._engine_has_run = False
+        #: Something outside drives every value (see backend.canbus): the model
+        #: and the trip computer stand still, and only the blink keeps time.
+        self.external = False
 
         # Integrate against the wall clock rather than assuming every timeout
         # lands exactly TICK_MS apart; a loaded machine drops frames, and a
@@ -87,10 +90,23 @@ class Simulator(QObject):
     # ----------------------------------------------------------------- blink
     def _toggle_blink(self) -> None:
         v = self.v
-        if v.hazard or v.turnLeft or v.turnRight:
+        if self._anything_blinks():
             v.blinkOn = not v.blinkOn
         elif v.blinkOn:
             v.blinkOn = False
+
+    def _anything_blinks(self) -> bool:
+        """Whether a lamp that flashes is lit: the phase runs only while one is.
+
+        Not just the indicators: the seat-belt, collision, ESC, immobiliser and
+        lane-departure lamps show only on the phase's "on" half, and with the
+        phase left off they never showed at all.
+        """
+        v = self.v
+        return bool(v.hazard or v.turnLeft or v.turnRight
+                    or not v.beltDriver or not v.beltPassenger
+                    or v.fcaWarn or v.escActive or v.immobilizer
+                    or v.laneDeparture != "none")
 
     def _on_trip_reset(self) -> None:
         self._trip_m = 0.0
@@ -101,6 +117,9 @@ class Simulator(QObject):
     def _tick(self) -> None:
         dt = min(MAX_STEP, max(0.001, self._clock.restart() / 1000.0))
         v = self.v
+
+        if self.external:
+            return
 
         if v.engineRunning:
             self._engine_has_run = True
